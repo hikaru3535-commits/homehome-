@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ほめタマ | 自己肯定感を高めるワンタップカウンター</title>
+  <meta name="description" content="タップするだけで心が温まる、自己肯定感を育むワンタップカウンター＆メモアプリ">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Animated Gradient & Glow -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- App Wrapper (Mobile Centered Container) -->
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">✨</div>
+        <div class="brand-text">
+          <h1>ほめタマ</h1>
+          <span class="sub-title">Self-Love Counter</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="sound-toggle-btn" class="icon-btn" title="効果音オン/オフ" aria-label="効果音切り替え">
+          <svg id="sound-icon-on" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg id="sound-icon-off" class="hidden" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+        <button id="stats-modal-btn" class="icon-btn" title="達成度" aria-label="達成度">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main View Content Container -->
+    <main class="view-content">
+
+      <!-- TAB 1: COUNTER VIEW -->
+      <section id="tab-counter" class="tab-pane active">
+        
+        <!-- Level Progress Pill -->
+        <div class="level-card">
+          <div class="level-info">
+            <span class="level-badge" id="user-level-badge">Lv.1 芽生え</span>
+            <span class="level-next-text" id="level-next-text">次のレベルまで あと10回</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="level-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Dynamic Compliment Message Box -->
+        <div class="message-card-wrapper">
+          <div class="message-card" id="compliment-card">
+            <div class="quote-icon">“</div>
+            <p id="compliment-text" class="compliment-text">画面をタップして、今日も自分を褒めよう！✨</p>
+            <div class="message-tags" id="compliment-tags">
+              <span class="tag">#自己肯定感アップ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main One-Tap Counter Area -->
+        <div class="counter-main-area">
+          <div class="ripple-container" id="ripple-container">
+            <button id="tap-button" class="tap-button" aria-label="カウントボタン">
+              <div class="btn-glow"></div>
+              <div class="btn-inner">
+                <span class="btn-icon">❤️</span>
+                <span class="btn-subtext">TAP HERE</span>
+                <span class="btn-count" id="counter-display">0</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Counters Bar -->
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">今日のタップ</span>
+            <span class="stat-value" id="today-count-display">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">累計タップ</span>
+            <span class="stat-value" id="total-count-display">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">継続ストリーク</span>
+            <span class="stat-value" id="streak-count-display">1日目🔥</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- TAB 2: MEMO VIEW -->
+      <section id="tab-memo" class="tab-pane">
+        <div class="memo-header-section">
+          <h2>自分ほめ & できたことメモ 📝</h2>
+          <p class="memo-subtitle">小さな「できた」や自分のステキなところをメモに残そう！</p>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="prompt-chips-wrapper">
+          <span class="prompt-chip" data-prompt="今日がんばったこと：">💪 がんばったこと</span>
+          <span class="prompt-chip" data-prompt="今日嬉しかったこと：">🌸 嬉しかったこと</span>
+          <span class="prompt-chip" data-prompt="自分のすきなところ：">✨ 自分のステキな点</span>
+          <span class="prompt-chip" data-prompt="感謝したいこと：">🙏 感謝ノート</span>
+        </div>
+
+        <!-- Add Memo Form -->
+        <div class="memo-input-card">
+          <div class="input-tags-select">
+            <button type="button" class="category-pill active" data-cat="できたこと">💪 できたこと</button>
+            <button type="button" class="category-pill" data-cat="自分ほめ">✨ 自分ほめ</button>
+            <button type="button" class="category-pill" data-cat="感謝">🌸 感謝</button>
+            <button type="button" class="category-pill" data-cat="いいこと">🍀 いいこと</button>
+          </div>
+          <div class="textarea-wrapper">
+            <textarea id="memo-input" placeholder="例：今日は朝7時に起きられた！偉い！" rows="3"></textarea>
+          </div>
+          <div class="form-footer">
+            <span class="char-count" id="char-count">0/200</span>
+            <button id="add-memo-btn" class="primary-btn">
+              <span>保存する</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Memo Filter & List -->
+        <div class="memo-list-section">
+          <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">すべて</button>
+            <button class="filter-btn" data-filter="できたこと">できたこと</button>
+            <button class="filter-btn" data-filter="自分ほめ">自分ほめ</button>
+            <button class="filter-btn" data-filter="感謝">感謝</button>
+            <button class="filter-btn" data-filter="いいこと">いいこと</button>
+          </div>
+
+          <div id="memo-list" class="memo-list">
+            <!-- Dynamic memos will be rendered here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: RECORDS / BADGES VIEW -->
+      <section id="tab-records" class="tab-pane">
+        <div class="records-header">
+          <h2>あつめた褒め言葉 & バッジ 🏆</h2>
+          <p class="memo-subtitle">タップを重ねて解放したポジティブメッセージと記念バッジ</p>
+        </div>
+
+        <!-- Badges Grid -->
+        <div class="section-title-small">獲得バッジコレクション</div>
+        <div class="badges-grid" id="badges-grid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Unlocked Quotes Collection -->
+        <div class="section-title-small" style="margin-top: 24px;">解禁されたスペシャルメッセージ</div>
+        <div class="unlocked-quotes-list" id="unlocked-quotes-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Tab Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="tab-counter" aria-label="カウンター">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 8v8M8 12h8"></path>
+          </svg>
+        </div>
+        <span class="nav-label">かうんたー</span>
+      </button>
+
+      <button class="nav-item" data-tab="tab-memo" aria-label="メモ">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+        </div>
+        <span class="nav-label">ほめメモ</span>
+      </button>
+
+      <button class="nav-item" data-tab="tab-records" aria-label="きろく・バッジ">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </div>
+        <span class="nav-label">きろく・バッジ</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Milestone Celebration Modal -->
+  <div id="milestone-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-badge-icon" id="modal-badge-emoji">🎉</div>
+      <h3 class="modal-title" id="modal-title">マイルストーン達成！</h3>
+      <p class="modal-count-text" id="modal-count-text">10回タップ達成！</p>
+      <div class="modal-quote-box">
+        <p id="modal-quote-text">「自分を信じる一歩を踏み出せましたね！あなたは本当にすばらしい！」</p>
+      </div>
+      <button id="modal-close-btn" class="primary-btn modal-btn">ありがとう！次へ進む ✨</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

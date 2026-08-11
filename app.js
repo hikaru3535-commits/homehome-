@@ -1,6 +1,6 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.4
+ * Self-Esteem Boosting Mobile Web App v3.5
  */
 
 // ==========================================
@@ -182,7 +182,23 @@ function getLevelInfo(totalCount) {
 }
 
 // ==========================================
-// 3. APP STATE MANAGEMENT & DATA MIGRATION
+// 3. DAY NORMALIZATION SYSTEM (0=SUN, 6=SAT)
+// ==========================================
+const DAY_MAP = {
+  0: 0, '0': 0, 'sun': 0, 'Sunday': 0, '日': 0,
+  1: 1, '1': 1, 'mon': 1, 'Monday': 1, '月': 1,
+  2: 2, '2': 2, 'tue': 2, 'Tuesday': 2, '火': 2,
+  3: 3, '3': 3, 'wed': 3, 'Wednesday': 3, '水': 3,
+  4: 4, '4': 4, 'thu': 4, 'Thursday': 4, '木': 4,
+  5: 5, '5': 5, 'fri': 5, 'Friday': 5, '金': 5,
+  6: 6, '6': 6, 'sat': 6, 'Saturday': 6, '土': 6
+};
+
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+// ==========================================
+// 4. APP STATE MANAGEMENT & DATA MIGRATION
 // ==========================================
 let state = {
   todayCount: 0,
@@ -231,7 +247,6 @@ function loadState() {
   state.todayCount = Math.max(0, state.todayCount || 0);
   state.totalCount = Math.max(0, state.totalCount || 0);
 
-  // Robust Migration for Legacy ToDos
   if (state.todos && Array.isArray(state.todos)) {
     state.todos = state.todos.map(t => {
       if (!t.scheduleType) t.scheduleType = 'repeat';
@@ -285,7 +300,7 @@ function saveState() {
 }
 
 // ==========================================
-// 4. HABIT TODO REPEAT & DATE/TIME LOGIC
+// 5. HABIT TODO REPEAT & DATE/TIME LOGIC
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -303,27 +318,29 @@ function isTodoActiveToday(todo) {
 
   // 2. Repeat Schedule Check
   const now = new Date();
-  const dayIndex = now.getDay(); // 0 = sun, 1 = mon, 2 = tue, 3 = wed, 4 = thu, 5 = fri, 6 = sat
-  const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const todayKey = dayKeys[dayIndex];
+  const todayIndex = now.getDay(); // 0 = Sunday, 1 = Mon, ..., 6 = Saturday
+  const todayKey = DAY_KEYS[todayIndex]; // 'sun', 'mon', ..., 'sat'
 
   const type = todo.repeatType || todo.repeat || 'daily';
 
   if (type === 'daily') return true;
-  if (type === 'weekdays') return dayIndex >= 1 && dayIndex <= 5;
-  if (type === 'weekends') return dayIndex === 0 || dayIndex === 6;
+  if (type === 'weekdays') return todayIndex >= 1 && todayIndex <= 5;
+  if (type === 'weekends') return todayIndex === 0 || todayIndex === 6;
 
-  // Multi-day selection or weekly check
+  // Multi-weekday check for 'weekly' or when todo.days array is populated
   if (type === 'weekly' || Array.isArray(todo.days)) {
     if (Array.isArray(todo.days) && todo.days.length > 0) {
-      return todo.days.includes(todayKey);
+      return todo.days.some(d => {
+        const norm = DAY_MAP[d];
+        return norm === todayIndex || d === todayKey;
+      });
     }
     return true;
   }
 
   if (typeof type === 'string') {
-    if (type === todayKey) return true;
-    if (Array.isArray(todo.days) && todo.days.includes(todayKey)) return true;
+    const normType = DAY_MAP[type];
+    if (normType === todayIndex || type === todayKey) return true;
   }
 
   return false;
@@ -344,10 +361,18 @@ function getScheduleLabel(todo) {
     const type = todo.repeatType || todo.repeat || 'daily';
     if (type === 'daily') label = '毎日';
     else if (type === 'weekdays') label = '平日';
-    else if (type === 'weekends') label = '休日';
+    else if (type === 'weekends') label = '土日・休日';
     else if ((type === 'weekly' || Array.isArray(todo.days)) && Array.isArray(todo.days) && todo.days.length > 0) {
+      const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
       const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
-      label = todo.days.map(d => dayNames[d] || d).join('・');
+      
+      const sortedDays = [...todo.days].sort((a, b) => {
+        const ia = dayOrder.indexOf(a) !== -1 ? dayOrder.indexOf(a) : DAY_MAP[a];
+        const ib = dayOrder.indexOf(b) !== -1 ? dayOrder.indexOf(b) : DAY_MAP[b];
+        return ia - ib;
+      });
+
+      label = sortedDays.map(d => dayNames[d] || DAY_NAMES_JA[DAY_MAP[d]] || d).join('・');
     } else {
       label = '毎日';
     }
@@ -421,7 +446,7 @@ function deleteHabitTodo(id) {
 }
 
 // ==========================================
-// 5. WEB AUDIO SYNTHESIZER
+// 6. WEB AUDIO SYNTHESIZER
 // ==========================================
 let audioCtx = null;
 
@@ -490,7 +515,7 @@ function playCelebrationSound() {
 }
 
 // ==========================================
-// 6. HTML5 CANVAS CONFETTI EFFECT
+// 7. HTML5 CANVAS CONFETTI EFFECT
 // ==========================================
 const canvas = document.getElementById('confetti-canvas');
 const ctx = canvas.getContext('2d');
@@ -570,7 +595,7 @@ function animateConfetti() {
 }
 
 // ==========================================
-// 7. UI INITIALIZATION & EVENT LISTENERS
+// 8. UI INITIALIZATION & EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
@@ -731,16 +756,22 @@ function openEditTodoModal(todo) {
   setModalScheduleType(scheduleType);
 
   const repeatType = todo.repeatType || todo.repeat || 'daily';
-  todoRepeatSelect.value = (repeatType === 'sat' || repeatType === 'sun' || repeatType === 'mon' || repeatType === 'tue' || repeatType === 'wed' || repeatType === 'thu' || repeatType === 'fri') ? 'weekly' : repeatType;
+  if (repeatType === 'weekly' || Array.isArray(todo.days)) {
+    todoRepeatSelect.value = 'weekly';
+  } else {
+    todoRepeatSelect.value = repeatType;
+  }
+
   todoDateInput.value = todo.specificDate || getTodayDateString();
   todoTimeInput.value = todo.targetTime || '';
 
   const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
   checkboxes.forEach(cb => {
-    cb.checked = Array.isArray(todo.days) && todo.days.includes(cb.value);
+    const isChecked = Array.isArray(todo.days) && todo.days.some(d => d === cb.value || DAY_MAP[d] === DAY_MAP[cb.value]);
+    cb.checked = isChecked;
   });
 
-  if (scheduleType === 'repeat' && (todoRepeatSelect.value === 'weekly' || Array.isArray(todo.days))) {
+  if (scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
     todoDaysSelector.classList.remove('hidden');
   } else {
     todoDaysSelector.classList.add('hidden');
@@ -928,7 +959,7 @@ function initUI() {
 }
 
 // ==========================================
-// 8. CORE COUNTER LOGIC
+// 9. CORE COUNTER LOGIC
 // ==========================================
 function handleTap(e) {
   state.todayCount += 1;
@@ -1028,7 +1059,7 @@ function showMilestoneModal(ms) {
 }
 
 // ==========================================
-// 9. MEMO FEATURE LOGIC
+// 10. MEMO FEATURE LOGIC
 // ==========================================
 function updateCharCount() {
   const len = memoInput.value.length;
@@ -1130,7 +1161,7 @@ function escapeHTML(str) {
 }
 
 // ==========================================
-// 10. RENDERERS & HOME TODO LIST
+// 11. RENDERERS & HOME TODO LIST
 // ==========================================
 function renderHomeTodoList() {
   const container = document.getElementById('home-todo-list');

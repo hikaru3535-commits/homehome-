@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="red">
 
   <!-- Background Animated Gradient & Glow -->
   <div class="bg-glow bg-glow-1"></div>
@@ -34,19 +34,31 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- Theme Switcher Button -->
+        <button id="theme-modal-btn" class="icon-btn" title="カラーテーマ切り替え" aria-label="テーマ切り替え">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.68 0-.44-.17-.86-.46-1.18-.3-.32-.46-.74-.46-1.18 0-.92.75-1.66 1.67-1.66h2.38c2.6 0 4.71-2.11 4.71-4.71 0-5.38-4.43-9.59-9.54-9.59z"></path>
+          </svg>
+        </button>
+        <!-- Sound Toggle Button -->
         <button id="sound-toggle-btn" class="icon-btn" title="効果音オン/オフ" aria-label="効果音切り替え">
-          <svg id="sound-icon-on" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="sound-icon-on" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
-          <svg id="sound-icon-off" class="hidden" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="sound-icon-off" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <line x1="23" y1="9" x2="17" y2="15"></line>
             <line x1="17" y1="9" x2="23" y2="15"></line>
           </svg>
         </button>
+        <!-- Stats Button -->
         <button id="stats-modal-btn" class="icon-btn" title="達成度" aria-label="達成度">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
             <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
             <path d="M4 22h16"></path>
@@ -81,8 +93,16 @@
             <div class="quote-icon">“</div>
             <p id="compliment-text" class="compliment-text">画面をタップして、今日も自分を褒めよう！✨</p>
             <div class="message-tags" id="compliment-tags">
-              <span class="tag">#自己肯定感アップ</span>
+              <span class="tag" id="current-pack-tag">#自己肯定感アップ</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Display Mode Switcher Toggle Pill -->
+        <div class="display-mode-switch-wrapper">
+          <div class="mode-switch-pill">
+            <button id="mode-today-btn" class="mode-btn active" data-mode="today">今日のカウント</button>
+            <button id="mode-total-btn" class="mode-btn" data-mode="total">累計カウント</button>
           </div>
         </div>
 
@@ -93,7 +113,7 @@
               <div class="btn-glow"></div>
               <div class="btn-inner">
                 <span class="btn-icon">❤️</span>
-                <span class="btn-subtext">TAP HERE</span>
+                <span class="btn-subtext" id="btn-mode-label">TODAY</span>
                 <span class="btn-count" id="counter-display">0</span>
               </div>
             </button>
@@ -102,13 +122,13 @@
 
         <!-- Quick Counters Bar -->
         <div class="stats-grid">
-          <div class="stat-box">
+          <div class="stat-box clickable-stat" id="stat-box-today" title="クリックでメイン表示切替">
             <span class="stat-label">今日のタップ</span>
-            <span class="stat-value" id="today-count-display">0</span>
+            <span class="stat-value" id="today-count-display">0回</span>
           </div>
-          <div class="stat-box">
+          <div class="stat-box clickable-stat" id="stat-box-total" title="クリックでメイン表示切替">
             <span class="stat-label">累計タップ</span>
-            <span class="stat-value" id="total-count-display">0</span>
+            <span class="stat-value" id="total-count-display">0回</span>
           </div>
           <div class="stat-box">
             <span class="stat-label">継続ストリーク</span>
@@ -172,9 +192,22 @@
         </div>
       </section>
 
-      <!-- TAB 3: RECORDS / BADGES VIEW -->
+      <!-- TAB 3: RECORDS / BADGES & SETTINGS VIEW -->
       <section id="tab-records" class="tab-pane">
-        <div class="records-header">
+        
+        <!-- Quote Pack Selector Section (Future-Proof Structure) -->
+        <div class="pack-selector-card">
+          <div class="pack-header">
+            <h3>💬 メッセージテーマ（名言セット）</h3>
+            <span class="pack-badge">拡張可能</span>
+          </div>
+          <p class="pack-desc">表示されるポジティブメッセージのテーマを切り替えられます</p>
+          <div class="pack-buttons-grid" id="quote-pack-selector">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div class="records-header" style="margin-top: 20px;">
           <h2>あつめた褒め言葉 & バッジ 🏆</h2>
           <p class="memo-subtitle">タップを重ねて解放したポジティブメッセージと記念バッジ</p>
         </div>
@@ -216,16 +249,46 @@
         <span class="nav-label">ほめメモ</span>
       </button>
 
-      <button class="nav-item" data-tab="tab-records" aria-label="きろく・バッジ">
+      <button class="nav-item" data-tab="tab-records" aria-label="きろく・設定">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
         </div>
-        <span class="nav-label">きろく・バッジ</span>
+        <span class="nav-label">きろく・設定</span>
       </button>
     </nav>
 
+  </div>
+
+  <!-- Color Theme Selector Modal -->
+  <div id="theme-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-badge-icon">🎨</div>
+      <h3 class="modal-title">カラーテーマ切り替え</h3>
+      <p class="modal-count-text">お好みのテーマカラーをお選びください</p>
+      
+      <div class="theme-options-grid">
+        <button class="theme-option-btn theme-red" data-theme="red">
+          <span class="theme-color-preview preview-red"></span>
+          <span class="theme-name">ローズ (赤)</span>
+        </button>
+        <button class="theme-option-btn theme-blue" data-theme="blue">
+          <span class="theme-color-preview preview-blue"></span>
+          <span class="theme-name">オーシャン (青)</span>
+        </button>
+        <button class="theme-option-btn theme-yellow" data-theme="yellow">
+          <span class="theme-color-preview preview-yellow"></span>
+          <span class="theme-name">サンシャイン (黄)</span>
+        </button>
+        <button class="theme-option-btn theme-green" data-theme="green">
+          <span class="theme-color-preview preview-green"></span>
+          <span class="theme-name">フォレスト (緑)</span>
+        </button>
+      </div>
+
+      <button id="theme-close-btn" class="primary-btn modal-btn" style="margin-top: 18px;">完了</button>
+    </div>
   </div>
 
   <!-- Milestone Celebration Modal -->

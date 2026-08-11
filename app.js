@@ -1,35 +1,142 @@
 /**
  * ほめタマ (SelfBoost Counter & Memo)
- * Self-Esteem Boosting Mobile Web App
+ * Self-Esteem Boosting Mobile Web App v2.0
  */
 
 // ==========================================
-// 1. COMPLIMENT & POSITIVE MESSAGES DATA
+// 1. EXTENDABLE QUOTE PACKS ARCHITECTURE
 // ==========================================
-const TAP_MESSAGES = [
-  "今日も存在してくれてありがとう！✨",
-  "あなたは生きているだけで満点です！💯",
-  "自分のペースで進めば大丈夫🌸",
-  "一歩ずつ前進中！すばらしい！💪",
-  "今日もあなたは最高に素敵です💖",
-  "自分を甘やかしてあげてね🍵",
-  "小さなことでも大きな一歩！🌟",
-  "あなたの笑顔が世界を温かくします😊",
-  "あなたは愛される価値がある存在です🌈",
-  "休むのも立派な行動です🍀",
-  "今日のあなたは昨日よりまた輝いてる✨",
-  "焦らなくて大丈夫、あなたのテンポで🎵",
-  "自分を褒めるあなた、本当に偉い！👍",
-  "そのままのあなたが一番素敵です💗",
-  "今日もがんばっている自分に拍手！👏",
-  "失敗も成功も全部大切な宝物✨",
-  "あなたは世界に一人だけの特別です🌺",
-  "よく頑張ったね！偉いぞ〜！🎉",
-  "明日もきっと良い日になるよ⭐",
-  "いつも応援しています！ずっと見守ってるよ💕"
-];
+const QUOTE_PACKS = {
+  standard: {
+    id: "standard",
+    name: "標準ほめ言葉",
+    icon: "💖",
+    tag: "#自己肯定感アップ",
+    messages: [
+      "今日も存在してくれてありがとう！✨",
+      "あなたは生きているだけで満点です！💯",
+      "自分のペースで進めば大丈夫🌸",
+      "一歩ずつ前進中！すばらしい！💪",
+      "今日もあなたは最高に素敵です💗",
+      "自分を甘やかしてあげてね🍵",
+      "小さなことでも大きな一歩！🌟",
+      "あなたの笑顔が世界を温かくします😊",
+      "あなたは愛される価値がある存在です🌈",
+      "休むのも立派な行動です🍀",
+      "今日のあなたは昨日よりまた輝いてる✨",
+      "焦らなくて大丈夫、あなたのテンポで🎵",
+      "自分を褒めるあなた、本当に偉い！👍",
+      "そのままのあなたが一番素敵です🌺",
+      "今日もがんばっている自分に拍手！👏",
+      "失敗も成功も全部大切な宝物✨",
+      "あなたは世界に一人だけの特別です☀️",
+      "よく頑張ったね！偉いぞ〜！🎉",
+      "明日もきっと良い日になるよ⭐",
+      "いつも応援しています！ずっと見守ってるよ💕",
+      "あなたの存在が誰かの癒やしになっています🍀",
+      "自分の心の声にやさしく耳を傾けよう👂✨",
+      "一回立ち止まっても、また歩き出せばOK！🚶‍♂️",
+      "今日も無事に過ごせただけで大勝利！🏆",
+      "あなたの優しさはめぐりめぐって自分に返ってくるよ🌸",
+      "毎日少しずつ、あなたは強くなってる！🌱",
+      "過去の自分と比べず、今の自分を愛そう❤️",
+      "完璧じゃなくて大丈夫。ありのままが美しい✨",
+      "辛いときは無理せず心を休めてね💤",
+      "あなたの積み重ねは決して無駄にならない！📚",
+      "周りと違っていい。それがあなたの個性だよ🎨",
+      "今日も一つ、素敵な発見ができたね！🔍",
+      "自分への小さなプレゼントを忘れずに🎁",
+      "あなたの選択はいつも間違いじゃないよ信頼しよう✨",
+      "心に太陽を持って、今日も笑顔でいこう☀️",
+      "自分の機嫌は自分で取れるあなた、天才！🌟",
+      "今日も生き抜いた自分を抱きしめてあげよう抱擁🤗",
+      "あなたの優しさに救われている人が必ずいるよ温かみ💕",
+      "どんな小歩も前進！一歩一歩を楽しんで♪",
+      "今日も今日とて、あなたは輝いています✨",
+      "自分を信じる強さが、あなたには備わっています！🛡️",
+      "美味しいものを食べて、心を満たそうね🍙",
+      "あなたの未来は希望で満ち溢れています🌈",
+      "失敗は挑戦した証！ナイスチャレンジ！👍",
+      "今日も自分の一番のファンでいよう📣",
+      "小さな幸せを見つける名人だね！🍀",
+      "あなたは大切な宝物。大切に扱ってね💎",
+      "今日もお疲れ様！ゆっくり休んでね夜空🌙",
+      "明日もあなたの輝く一日になりますように✨",
+      "ずっとずっと、あなたのことを誇りに思っています！🏆"
+    ]
+  },
+  anime: {
+    id: "anime",
+    name: "アニメ・情熱の名言",
+    icon: "🔥",
+    tag: "#アニメ名言",
+    messages: [
+      "「あきらめたらそこで試合終了ですよ」✨",
+      "「逃げちゃダメだ、自分を信じて進もう！」🔥",
+      "「心が叫びたがってるんだ。自分の気持ちを大切に！」🌟",
+      "「人は誰でも、誰かのヒーローになれる！」🦸‍♂️",
+      "「昨日の自分を超えてゆけ！」🚀",
+      "「立ち止まってもいい。また歩き出せばいいんだ！」🌱",
+      "「君の選択は間違っていない！」🎯",
+      "「諦めない心こそが、最大の武器だ！」🛡️",
+      "「奇跡は諦めない奴の頭上にしか降りてこない！」🌈",
+      "「笑っていれば、きっと良い風が吹く！」風🍃",
+      "「君は君のままで素晴らしい！」✨",
+      "「限界を決めるのは、いつだって自分自身だ！」💥",
+      "「仲間と自分を信じて前へ進め！」🤝",
+      "「どんな暗闇でも、光は必ず見つかる！」💡",
+      "「今日も全力で駆け抜けた君に拍手を！」👏"
+    ]
+  },
+  sports: {
+    id: "sports",
+    name: "スポーツ・勇気の名言",
+    icon: "🏆",
+    tag: "#スポーツ名言",
+    messages: [
+      "「努力は裏切らない。今日の1タップも力になる！」💪",
+      "「ナイスファイト！今日の頑張りは素晴らしい！」🔥",
+      "「一球入魂！今この瞬間を全力で楽しもう！」⚾",
+      "「転んだら起き上がればいい。何度でも挑もう！」🏃‍♂️",
+      "「最後まで諦めない姿がカッコいい！」🌟",
+      "「限界の一歩先へ！君なら行ける！」🚀",
+      "「今日の汗と努力は明日のメダルだ！」🏅",
+      "「失敗を恐れるな！挑戦することに価値がある！」🎯",
+      "「チームの一員として、君の存在は不可欠だ！」⚽",
+      "「自分の可能性を信じて、突き進め！」💥",
+      "「継続は力なり。毎日の一歩が未来を作る！」🌱",
+      "「ナイスチャレンジ！素晴らしいスピリットだ！」👏",
+      "「逆境こそ成長のチャンス！」🌈",
+      "「今日も最高のプレイを見せてくれたね！」✨",
+      "「君が主役のストーリーはここからだ！」🏆"
+    ]
+  }
+};
 
-const MILESTONES = [
+// Quote Manager Helper Object
+const QuoteManager = {
+  getActivePack() {
+    const packId = state.activeQuotePack || 'standard';
+    return QUOTE_PACKS[packId] || QUOTE_PACKS.standard;
+  },
+  setActivePack(packId) {
+    if (QUOTE_PACKS[packId]) {
+      state.activeQuotePack = packId;
+      saveState();
+    }
+  },
+  getRandomQuote() {
+    const pack = this.getActivePack();
+    const msgs = pack.messages;
+    const idx = Math.floor(Math.random() * msgs.length);
+    return { text: msgs[idx], tag: pack.tag };
+  }
+};
+
+// ==========================================
+// 2. MILESTONES DATA
+// ==========================================
+const PREDEFINED_MILESTONES = [
   { count: 5, badge: "🌱 芽生え", title: "はじめの一歩！", quote: "「自分を褒める旅がスタートしました！どんな小さなことでもあなたは最高です！」" },
   { count: 15, badge: "🌸 ひよこ組", title: "ほめ上手マスター！", quote: "「タップを重ねるたびに心が温かくなっていますね。自分を愛するパワーが育っています！」" },
   { count: 30, badge: "⭐ 光のツボミ", title: "自己肯定感UP！", quote: "「30回達成！あなたの心の中にパッと明るい光が灯りました！」" },
@@ -39,8 +146,47 @@ const MILESTONES = [
   { count: 500, badge: "🌟 究極の神ほめ", title: "伝説のセルフラブマスター！", quote: "「500回到達！あなたは自分自身の最高の味方であり、ヒーローです！」" }
 ];
 
+// Unlimited Level Generator Helper
+function getLevelInfo(totalCount) {
+  // Predefined milestones first
+  let currentLevel = PREDEFINED_MILESTONES[0];
+  let nextLevel = PREDEFINED_MILESTONES[1];
+
+  for (let i = 0; i < PREDEFINED_MILESTONES.length; i++) {
+    if (totalCount >= PREDEFINED_MILESTONES[i].count) {
+      currentLevel = PREDEFINED_MILESTONES[i];
+      nextLevel = PREDEFINED_MILESTONES[i + 1] || null;
+    } else {
+      break;
+    }
+  }
+
+  // Beyond 500 count: Unlimited procedural levels!
+  if (totalCount >= 500) {
+    const extraLevelNum = Math.floor((totalCount - 500) / 100) + 1;
+    const currentReq = 500 + (extraLevelNum - 1) * 100;
+    const nextReq = 500 + extraLevelNum * 100;
+
+    currentLevel = {
+      count: currentReq,
+      badge: `💎 Lv.${7 + extraLevelNum} 宇宙クラス`,
+      title: `レベル ${7 + extraLevelNum} 達成！`,
+      quote: `「累計${totalCount.toLocaleString()}回達成！あなたの自己肯定感は無限大です！」`
+    };
+
+    nextLevel = {
+      count: nextReq,
+      badge: `💎 Lv.${8 + extraLevelNum} 宇宙クラス`,
+      title: `レベル ${8 + extraLevelNum} 達成！`,
+      quote: `「累計${nextReq.toLocaleString()}回目を目指して突き進みましょう！」`
+    };
+  }
+
+  return { currentLevel, nextLevel };
+}
+
 // ==========================================
-// 2. APP STATE MANAGEMENT
+// 3. APP STATE MANAGEMENT
 // ==========================================
 let state = {
   todayCount: 0,
@@ -48,12 +194,14 @@ let state = {
   lastActiveDate: new Date().toDateString(),
   streakCount: 1,
   soundEnabled: true,
+  theme: 'red', // 'red' | 'blue' | 'yellow' | 'green'
+  displayMode: 'today', // 'today' | 'total'
+  activeQuotePack: 'standard',
   memos: [],
   unlockedMilestones: []
 };
 
-// LocalStorage Persistence Key
-const STORAGE_KEY = 'hometama_app_state_v1';
+const STORAGE_KEY = 'hometama_app_state_v2';
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -89,7 +237,7 @@ function saveState() {
 }
 
 // ==========================================
-// 3. WEB AUDIO SYNTHESIZER (SOUND EFFECTS)
+// 4. WEB AUDIO SYNTHESIZER (SOUND EFFECTS)
 // ==========================================
 let audioCtx = null;
 
@@ -114,7 +262,6 @@ function playTapSound() {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
-    // Pitch rises slightly with tap count modulo
     const baseFreq = 440 + (state.todayCount % 12) * 20;
     osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
@@ -128,9 +275,7 @@ function playTapSound() {
 
     osc.start();
     osc.stop(audioCtx.currentTime + 0.12);
-  } catch (e) {
-    console.log("Audio play error:", e);
-  }
+  } catch (e) {}
 }
 
 function playCelebrationSound() {
@@ -138,7 +283,7 @@ function playCelebrationSound() {
   initAudio();
   if (!audioCtx) return;
 
-  const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+  const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
     setTimeout(() => {
       try {
@@ -161,7 +306,7 @@ function playCelebrationSound() {
 }
 
 // ==========================================
-// 4. HTML5 CANVAS CONFETTI EFFECT
+// 5. HTML5 CANVAS CONFETTI EFFECT
 // ==========================================
 const canvas = document.getElementById('confetti-canvas');
 const ctx = canvas.getContext('2d');
@@ -210,7 +355,7 @@ function animateConfetti() {
         activeParticles++;
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.4; // Gravity
+        p.vy += 0.4;
         p.rotation += p.rSpeed;
         p.opacity -= 0.015;
 
@@ -241,10 +386,11 @@ function animateConfetti() {
 }
 
 // ==========================================
-// 5. UI INITIALIZATION & EVENT LISTENERS
+// 6. UI INITIALIZATION & EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
+  applyTheme(state.theme);
   initUI();
   renderAll();
 });
@@ -252,22 +398,32 @@ document.addEventListener('DOMContentLoaded', () => {
 // DOM Elements
 const tapButton = document.getElementById('tap-button');
 const counterDisplay = document.getElementById('counter-display');
+const btnModeLabel = document.getElementById('btn-mode-label');
 const todayCountDisplay = document.getElementById('today-count-display');
 const totalCountDisplay = document.getElementById('total-count-display');
 const streakCountDisplay = document.getElementById('streak-count-display');
 const complimentCard = document.getElementById('compliment-card');
 const complimentText = document.getElementById('compliment-text');
+const currentPackTag = document.getElementById('current-pack-tag');
 const userLevelBadge = document.getElementById('user-level-badge');
 const levelNextText = document.getElementById('level-next-text');
 const levelProgressFill = document.getElementById('level-progress-fill');
-const rippleContainer = document.getElementById('ripple-container');
 
-// Sound Buttons
+// Mode Switch Buttons
+const modeTodayBtn = document.getElementById('mode-today-btn');
+const modeTotalBtn = document.getElementById('mode-total-btn');
+const statBoxToday = document.getElementById('stat-box-today');
+const statBoxTotal = document.getElementById('stat-box-total');
+
+// Sound & Theme Buttons
 const soundToggleBtn = document.getElementById('sound-toggle-btn');
 const soundIconOn = document.getElementById('sound-icon-on');
 const soundIconOff = document.getElementById('sound-icon-off');
+const themeModalBtn = document.getElementById('theme-modal-btn');
+const themeModal = document.getElementById('theme-modal');
+const themeCloseBtn = document.getElementById('theme-close-btn');
 
-// Tab Buttons
+// Tab Navigation
 const navItems = document.querySelectorAll('.nav-item');
 const tabPanes = document.querySelectorAll('.tab-pane');
 
@@ -291,11 +447,66 @@ const modalCloseBtn = document.getElementById('modal-close-btn');
 let activeMemoCategory = 'できたこと';
 let activeMemoFilter = 'all';
 
+function applyTheme(themeName) {
+  state.theme = themeName;
+  document.body.setAttribute('data-theme', themeName);
+
+  // Update theme modal active button
+  document.querySelectorAll('.theme-option-btn').forEach(btn => {
+    if (btn.getAttribute('data-theme') === themeName) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  saveState();
+}
+
+function setDisplayMode(mode) {
+  state.displayMode = mode;
+  if (mode === 'today') {
+    modeTodayBtn.classList.add('active');
+    modeTotalBtn.classList.remove('active');
+    statBoxToday.classList.add('active-stat');
+    statBoxTotal.classList.remove('active-stat');
+    btnModeLabel.innerText = 'TODAY';
+  } else {
+    modeTodayBtn.classList.remove('active');
+    modeTotalBtn.classList.add('active');
+    statBoxToday.classList.remove('active-stat');
+    statBoxTotal.classList.add('active-stat');
+    btnModeLabel.innerText = 'TOTAL';
+  }
+  renderCounterStats();
+  saveState();
+}
+
 function initUI() {
   // 1. One-tap Counter Listener
   tapButton.addEventListener('click', handleTap);
 
-  // 2. Sound Toggle Listener
+  // 2. Main Display Mode Switchers
+  modeTodayBtn.addEventListener('click', () => setDisplayMode('today'));
+  modeTotalBtn.addEventListener('click', () => setDisplayMode('total'));
+  statBoxToday.addEventListener('click', () => setDisplayMode('today'));
+  statBoxTotal.addEventListener('click', () => setDisplayMode('total'));
+
+  // 3. Theme Selector Modal
+  themeModalBtn.addEventListener('click', () => {
+    themeModal.classList.remove('hidden');
+  });
+  themeCloseBtn.addEventListener('click', () => {
+    themeModal.classList.add('hidden');
+  });
+  document.querySelectorAll('.theme-option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.getAttribute('data-theme');
+      applyTheme(theme);
+    });
+  });
+
+  // 4. Sound Toggle Listener
   updateSoundUI();
   soundToggleBtn.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
@@ -303,7 +514,7 @@ function initUI() {
     saveState();
   });
 
-  // 3. Bottom Tab Switching Listener
+  // 5. Bottom Tab Switching Listener
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetTab = item.getAttribute('data-tab');
@@ -311,7 +522,7 @@ function initUI() {
     });
   });
 
-  // 4. Memo Category Pills
+  // 6. Memo Category Pills
   categoryPills.forEach(pill => {
     pill.addEventListener('click', () => {
       categoryPills.forEach(p => p.classList.remove('active'));
@@ -320,7 +531,7 @@ function initUI() {
     });
   });
 
-  // 5. Prompt Chips
+  // 7. Prompt Chips
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.getAttribute('data-prompt');
@@ -330,13 +541,13 @@ function initUI() {
     });
   });
 
-  // 6. Memo Input Char Counter
+  // 8. Memo Input Char Counter
   memoInput.addEventListener('input', updateCharCount);
 
-  // 7. Add Memo Button
+  // 9. Add Memo Button
   addMemoBtn.addEventListener('click', handleAddMemo);
 
-  // 8. Memo Filter Tabs
+  // 10. Memo Filter Tabs
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
@@ -346,19 +557,21 @@ function initUI() {
     });
   });
 
-  // 9. Close Modal Listener
+  // 11. Close Modal Listener
   modalCloseBtn.addEventListener('click', () => {
     milestoneModal.classList.add('hidden');
   });
 
-  // 10. Quick Stats Button Modal
+  // 12. Quick Stats Button Modal
   document.getElementById('stats-modal-btn').addEventListener('click', () => {
     switchTab('tab-records');
   });
+
+  setDisplayMode(state.displayMode || 'today');
 }
 
 // ==========================================
-// 6. CORE COUNTER LOGIC
+// 7. CORE COUNTER LOGIC
 // ==========================================
 function handleTap(e) {
   state.todayCount += 1;
@@ -427,33 +640,18 @@ function createButtonRipple(e) {
 }
 
 function updateComplimentMessage() {
-  const randomIndex = Math.floor(Math.random() * TAP_MESSAGES.length);
-  const msg = TAP_MESSAGES[randomIndex];
+  const { text, tag } = QuoteManager.getRandomQuote();
 
   complimentCard.classList.remove('bounce-pop');
-  void complimentCard.offsetWidth; // Trigger reflow
+  void complimentCard.offsetWidth;
   complimentCard.classList.add('bounce-pop');
 
-  complimentText.innerText = msg;
-}
-
-function getCurrentMilestoneInfo() {
-  let currentLevel = MILESTONES[0];
-  let nextLevel = MILESTONES[1];
-
-  for (let i = 0; i < MILESTONES.length; i++) {
-    if (state.totalCount >= MILESTONES[i].count) {
-      currentLevel = MILESTONES[i];
-      nextLevel = MILESTONES[i + 1] || null;
-    } else {
-      break;
-    }
-  }
-  return { currentLevel, nextLevel };
+  complimentText.innerText = text;
+  currentPackTag.innerText = tag;
 }
 
 function checkMilestoneUnlocked() {
-  MILESTONES.forEach(ms => {
+  PREDEFINED_MILESTONES.forEach(ms => {
     if (state.totalCount >= ms.count && !state.unlockedMilestones.includes(ms.count)) {
       state.unlockedMilestones.push(ms.count);
       showMilestoneModal(ms);
@@ -461,18 +659,29 @@ function checkMilestoneUnlocked() {
       triggerConfetti();
     }
   });
+
+  // Beyond 500 count check
+  if (state.totalCount > 500 && state.totalCount % 100 === 0) {
+    if (!state.unlockedMilestones.includes(state.totalCount)) {
+      state.unlockedMilestones.push(state.totalCount);
+      const { currentLevel } = getLevelInfo(state.totalCount);
+      showMilestoneModal(currentLevel);
+      playCelebrationSound();
+      triggerConfetti();
+    }
+  }
 }
 
 function showMilestoneModal(ms) {
   modalTitle.innerText = ms.title;
-  modalCountText.innerText = `累計 ${ms.count} 回タップ達成！`;
+  modalCountText.innerText = `累計 ${state.totalCount.toLocaleString()} 回タップ達成！`;
   modalQuoteText.innerText = ms.quote;
   modalBadgeEmoji.innerText = ms.badge.split(' ')[0] || '🎉';
   milestoneModal.classList.remove('hidden');
 }
 
 // ==========================================
-// 7. MEMO FEATURE LOGIC
+// 8. MEMO FEATURE LOGIC
 // ==========================================
 function updateCharCount() {
   const len = memoInput.value.length;
@@ -512,7 +721,6 @@ function handleAddMemo() {
   updateCharCount();
   renderMemoList();
 
-  // Subtle tap feedback
   if (state.soundEnabled) playTapSound();
 }
 
@@ -575,7 +783,7 @@ function escapeHTML(str) {
 }
 
 // ==========================================
-// 8. TAB NAVIGATION & RENDERERS
+// 9. TAB NAVIGATION & RENDERERS
 // ==========================================
 function switchTab(tabId) {
   navItems.forEach(item => {
@@ -609,14 +817,16 @@ function updateSoundUI() {
 }
 
 function renderCounterStats() {
-  counterDisplay.innerText = state.todayCount;
-  todayCountDisplay.innerText = `${state.todayCount}回`;
-  totalCountDisplay.innerText = `${state.totalCount}回`;
+  const activeCount = state.displayMode === 'today' ? state.todayCount : state.totalCount;
+  counterDisplay.innerText = activeCount.toLocaleString('ja-JP');
+
+  todayCountDisplay.innerText = `${state.todayCount.toLocaleString('ja-JP')}回`;
+  totalCountDisplay.innerText = `${state.totalCount.toLocaleString('ja-JP')}回`;
   streakCountDisplay.innerText = `${state.streakCount}日目🔥`;
 }
 
 function renderLevelProgress() {
-  const { currentLevel, nextLevel } = getCurrentMilestoneInfo();
+  const { currentLevel, nextLevel } = getLevelInfo(state.totalCount);
 
   userLevelBadge.innerText = currentLevel.badge;
 
@@ -629,20 +839,48 @@ function renderLevelProgress() {
 
     const percent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
 
-    levelNextText.innerText = `次の目標（${nextLevel.badge}）まで あと${remaining}回`;
+    levelNextText.innerText = `次の目標（${nextLevel.badge}）まで あと${remaining.toLocaleString()}回`;
     levelProgressFill.style.width = `${percent}%`;
   } else {
-    levelNextText.innerText = `最高ランク到達！素晴らしい！`;
+    levelNextText.innerText = `最高レベル達成！素晴らしい！`;
     levelProgressFill.style.width = `100%`;
   }
 }
 
 function renderRecords() {
-  // Render Badges
+  // 1. Render Quote Pack Selectors
+  const packContainer = document.getElementById('quote-pack-selector');
+  packContainer.innerHTML = '';
+
+  Object.values(QUOTE_PACKS).forEach(pack => {
+    const btn = document.createElement('button');
+    const isActive = (state.activeQuotePack || 'standard') === pack.id;
+    btn.className = `pack-option-btn ${isActive ? 'active' : ''}`;
+    btn.innerHTML = `
+      <div class="pack-name-box">
+        <span class="pack-icon">${pack.icon}</span>
+        <div>
+          <div class="pack-title">${pack.name}</div>
+          <div class="pack-count-tag">${pack.messages.length}種類のメッセージ</div>
+        </div>
+      </div>
+      <span class="pack-badge">${isActive ? '選択中' : '切り替える'}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      QuoteManager.setActivePack(pack.id);
+      renderRecords();
+      updateComplimentMessage();
+    });
+
+    packContainer.appendChild(btn);
+  });
+
+  // 2. Render Badges Grid
   const badgesGrid = document.getElementById('badges-grid');
   badgesGrid.innerHTML = '';
 
-  MILESTONES.forEach(ms => {
+  PREDEFINED_MILESTONES.forEach(ms => {
     const isUnlocked = state.unlockedMilestones.includes(ms.count);
     const item = document.createElement('div');
     item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'}`;
@@ -658,11 +896,11 @@ function renderRecords() {
     badgesGrid.appendChild(item);
   });
 
-  // Render Unlocked Quotes
+  // 3. Render Unlocked Quotes
   const quotesList = document.getElementById('unlocked-quotes-list');
   quotesList.innerHTML = '';
 
-  const unlockedMs = MILESTONES.filter(ms => state.unlockedMilestones.includes(ms.count));
+  const unlockedMs = PREDEFINED_MILESTONES.filter(ms => state.unlockedMilestones.includes(ms.count));
 
   if (unlockedMs.length === 0) {
     quotesList.innerHTML = `

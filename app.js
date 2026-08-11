@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.7
- * Unified Weekday Keys ('mon','tue','wed','thu','fri','sat','sun')
+ * Self-Esteem Boosting Mobile Web App v3.8
+ * Strict getDay() Mapping & Explicit Console Log Tracking
  */
 
 // ==========================================
@@ -183,13 +183,19 @@ function getLevelInfo(totalCount) {
 }
 
 // ==========================================
-// 3. UNIFIED WEEKDAY IDENTIFIERS ('mon'..'sun')
+// 3. STRICT getDay() WEEKDAY MAPPING
 // ==========================================
-// JavaScript Date.getDay(): 0=Sunday ('sun'), 1=Monday ('mon'), ..., 6=Saturday ('sat')
+// 0 = 'sun', 1 = 'mon', 2 = 'tue', 3 = 'wed', 4 = 'thu', 5 = 'fri', 6 = 'sat'
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const WEEKDAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
-// Helper to sanitize any todo item into a valid data structure
+function getTodayWeekdayKey() {
+  const d = new Date();
+  const dayIndex = d.getDay(); // 0 = sun, 1 = mon, 2 = tue, 3 = wed, 4 = thu, 5 = fri, 6 = sat
+  return WEEKDAY_KEYS[dayIndex];
+}
+
+// Helper to sanitize any todo item while preserving existing days array intact
 function sanitizeTodo(todo) {
   if (!todo || typeof todo !== 'object') {
     return {
@@ -204,12 +210,24 @@ function sanitizeTodo(todo) {
     };
   }
 
+  // Preserve existing days array completely without removing 'sat' or 'sun'
+  let preservedDays = [];
+  if (Array.isArray(todo.days) && todo.days.length > 0) {
+    preservedDays = todo.days.map(d => String(d).trim().toLowerCase());
+  } else if (todo.repeatType === 'weekdays') {
+    preservedDays = ['mon','tue','wed','thu','fri'];
+  } else if (todo.repeatType === 'weekends') {
+    preservedDays = ['sat','sun'];
+  } else {
+    preservedDays = ['mon','tue','wed','thu','fri','sat','sun'];
+  }
+
   return {
     id: todo.id || Date.now(),
     title: todo.title || '無題のタスク',
     scheduleType: todo.scheduleType === 'specific_date' ? 'specific_date' : 'repeat',
     repeatType: todo.repeatType || todo.repeat || 'daily',
-    days: Array.isArray(todo.days) ? todo.days.map(d => String(d).trim().toLowerCase()) : ['mon','tue','wed','thu','fri','sat','sun'],
+    days: preservedDays,
     specificDate: todo.specificDate || '',
     targetTime: todo.targetTime || '',
     completedDates: Array.isArray(todo.completedDates) ? todo.completedDates : []
@@ -321,27 +339,27 @@ function isTodoActiveToday(todo) {
 
     // 1. Specific Date Check
     if (scheduleType === 'specific_date') {
-      return todo.specificDate === todayStr;
+      const isActive = (todo.specificDate === todayStr);
+      return isActive;
     }
 
     // 2. Repeat Schedule Check
-    const now = new Date();
-    const todayIndex = now.getDay(); // 0 = Sunday ('sun'), 1 = Mon ('mon'), ..., 6 = Saturday ('sat')
-    const todayKey = WEEKDAY_KEYS[todayIndex]; // Exact key: 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
-
+    const currentDay = getTodayWeekdayKey(); // 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
     const type = todo.repeatType || todo.repeat || 'daily';
 
     if (type === 'daily') return true;
-    if (type === 'weekdays') return todayIndex >= 1 && todayIndex <= 5;
-    if (type === 'weekends') return todayIndex === 0 || todayIndex === 6;
 
-    // Multi-weekday check for 'weekly' or custom day lists
+    const d = new Date();
+    const dayIndex = d.getDay(); // 0 = sun, 1 = mon, ..., 6 = sat
+    if (type === 'weekdays') return dayIndex >= 1 && dayIndex <= 5;
+    if (type === 'weekends') return dayIndex === 0 || dayIndex === 6;
+
+    // Multi-weekday check for 'weekly' or when todo.days exists
     if (type === 'weekly' || Array.isArray(todo.days)) {
-      if (Array.isArray(todo.days) && todo.days.length > 0) {
-        const normalizedDays = todo.days.map(d => String(d).trim().toLowerCase());
-        return normalizedDays.includes(todayKey);
-      }
-      return true;
+      const daysArr = Array.isArray(todo.days) ? todo.days.map(x => String(x).trim().toLowerCase()) : [];
+      const isActive = daysArr.includes(currentDay);
+      console.log("Today:", currentDay, "Todo days:", todo.days, "Match:", isActive, "Title:", todo.title);
+      return isActive;
     }
 
     return true;

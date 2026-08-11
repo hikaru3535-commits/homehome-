@@ -838,6 +838,35 @@ html, body {
   color: #be185d;
 }
 
+/* Schedule Type Toggle Switcher Pills */
+.schedule-type-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+.sched-type-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.sched-type-btn.active {
+  background: #ffffff;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
 /* Multi-Weekday Checkbox Selector Grid */
 .weekday-checkboxes-grid {
   display: grid;

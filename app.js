@@ -1,6 +1,6 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.2
+ * Self-Esteem Boosting Mobile Web App v3.3
  */
 
 // ==========================================
@@ -196,9 +196,9 @@ let state = {
   memos: [],
   unlockedMilestones: [],
   todos: [
-    { id: 1, title: '💧 水を1杯飲む', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] },
-    { id: 2, title: '🧘‍♂️ 1分間の深呼吸', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] },
-    { id: 3, title: '✨ できたことを1つメモする', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] }
+    { id: 1, title: '💧 水を1杯飲む', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '07:30', completedDates: [] },
+    { id: 2, title: '🧘‍♂️ 1分間の深呼吸', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '12:00', completedDates: [] },
+    { id: 3, title: '✨ できたことを1つメモする', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '21:00', completedDates: [] }
   ]
 };
 
@@ -234,6 +234,10 @@ function loadState() {
   // Migration for Legacy ToDos
   if (state.todos && Array.isArray(state.todos)) {
     state.todos = state.todos.map(t => {
+      if (!t.scheduleType) t.scheduleType = 'repeat';
+      if (!t.specificDate) t.specificDate = '';
+      if (t.targetTime === undefined) t.targetTime = '';
+
       if (!t.repeatType) {
         if (t.repeat === 'daily' || t.repeat === 'weekdays' || t.repeat === 'weekends') {
           t.repeatType = t.repeat;
@@ -250,9 +254,9 @@ function loadState() {
     });
   } else {
     state.todos = [
-      { id: 1, title: '💧 水を1杯飲む', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] },
-      { id: 2, title: '🧘‍♂️ 1分間の深呼吸', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] },
-      { id: 3, title: '✨ できたことを1つメモする', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], completedDates: [] }
+      { id: 1, title: '💧 水を1杯飲む', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '07:30', completedDates: [] },
+      { id: 2, title: '🧘‍♂️ 1分間の深呼吸', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '12:00', completedDates: [] },
+      { id: 3, title: '✨ できたことを1つメモする', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '21:00', completedDates: [] }
     ];
   }
 
@@ -279,7 +283,7 @@ function saveState() {
 }
 
 // ==========================================
-// 4. HABIT TODO REPEAT & COUNTER LINK LOGIC
+// 4. HABIT TODO REPEAT & DATE/TIME LOGIC
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -287,12 +291,21 @@ function getTodayDateString() {
 }
 
 function isTodoActiveToday(todo) {
+  const todayStr = getTodayDateString();
+  const scheduleType = todo.scheduleType || 'repeat';
+
+  // 1. Specific Date Check
+  if (scheduleType === 'specific_date') {
+    return todo.specificDate === todayStr;
+  }
+
+  // 2. Repeat Schedule Check
   const now = new Date();
   const dayIndex = now.getDay(); // 0 = sun, 1 = mon, 2 = tue, 3 = wed, 4 = thu, 5 = fri, 6 = sat
   const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const todayKey = dayKeys[dayIndex];
 
-  const type = todo.repeatType || todo.repeat;
+  const type = todo.repeatType || todo.repeat || 'daily';
 
   if (type === 'daily') return true;
   if (type === 'weekdays' && dayIndex >= 1 && dayIndex <= 5) return true;
@@ -307,18 +320,36 @@ function isTodoActiveToday(todo) {
   return false;
 }
 
-function getRepeatLabel(todo) {
-  const type = todo.repeatType || todo.repeat;
-  if (type === 'daily') return '毎日';
-  if (type === 'weekdays') return '平日';
-  if (type === 'weekends') return '休日';
-  
-  if (type === 'weekly' && Array.isArray(todo.days) && todo.days.length > 0) {
-    const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
-    return todo.days.map(d => dayNames[d] || d).join('・');
+function getScheduleLabel(todo) {
+  let label = '';
+  const scheduleType = todo.scheduleType || 'repeat';
+
+  if (scheduleType === 'specific_date' && todo.specificDate) {
+    const parts = todo.specificDate.split('-');
+    if (parts.length === 3) {
+      label = `📅 ${Number(parts[1])}/${Number(parts[2])}`;
+    } else {
+      label = `📅 ${todo.specificDate}`;
+    }
+  } else {
+    const type = todo.repeatType || todo.repeat || 'daily';
+    if (type === 'daily') label = '毎日';
+    else if (type === 'weekdays') label = '平日';
+    else if (type === 'weekends') label = '休日';
+    else if (type === 'weekly' && Array.isArray(todo.days) && todo.days.length > 0) {
+      const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
+      label = todo.days.map(d => dayNames[d] || d).join('・');
+    } else {
+      label = '毎日';
+    }
   }
 
-  return '毎日';
+  // Append time if configured (HH:MM)
+  if (todo.targetTime) {
+    label += ` ⏰ ${todo.targetTime}`;
+  }
+
+  return label;
 }
 
 function toggleTodoCompletion(todoId) {
@@ -580,6 +611,11 @@ const cancelTodoBtn = document.getElementById('cancel-todo-btn');
 const todoTitleInput = document.getElementById('todo-title-input');
 const todoRepeatSelect = document.getElementById('todo-repeat-select');
 const todoDaysSelector = document.getElementById('todo-days-selector');
+const todoRepeatGroup = document.getElementById('todo-repeat-group');
+const todoDateGroup = document.getElementById('todo-date-group');
+const todoDateInput = document.getElementById('todo-date-input');
+const todoTimeInput = document.getElementById('todo-time-input');
+const schedTypeBtns = document.querySelectorAll('.sched-type-btn');
 
 // Tab Navigation
 const navItems = document.querySelectorAll('.nav-item');
@@ -604,6 +640,7 @@ const modalCloseBtn = document.getElementById('modal-close-btn');
 
 let activeMemoCategory = 'できたこと';
 let activeMemoFilter = 'all';
+let activeScheduleType = 'repeat'; // 'repeat' | 'specific_date'
 
 function applyTheme(themeName) {
   state.theme = themeName;
@@ -639,14 +676,36 @@ function setDisplayMode(mode) {
   saveState();
 }
 
+function setModalScheduleType(type) {
+  activeScheduleType = type;
+  schedTypeBtns.forEach(btn => {
+    if (btn.getAttribute('data-type') === type) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  if (type === 'specific_date') {
+    todoRepeatGroup.classList.add('hidden');
+    todoDateGroup.classList.remove('hidden');
+  } else {
+    todoRepeatGroup.classList.remove('hidden');
+    todoDateGroup.classList.add('hidden');
+  }
+}
+
 function openAddTodoModal() {
   todoEditIdInput.value = '';
   todoModalTitle.innerText = '習慣ToDoを作成';
   todoModalSubtext.innerText = '毎日・定期的に続けたいタスクを登録しよう';
   todoTitleInput.value = '';
   todoRepeatSelect.value = 'daily';
+  todoDateInput.value = getTodayDateString();
+  todoTimeInput.value = '';
   
-  // Uncheck all weekday checkboxes
+  setModalScheduleType('repeat');
+
   document.querySelectorAll('#todo-days-selector input[type="checkbox"]').forEach(cb => cb.checked = false);
   todoDaysSelector.classList.add('hidden');
 
@@ -657,19 +716,23 @@ function openAddTodoModal() {
 function openEditTodoModal(todo) {
   todoEditIdInput.value = todo.id;
   todoModalTitle.innerText = '習慣ToDoを編集';
-  todoModalSubtext.innerText = 'タスクの内容や繰り返しスケジュールを変更できます';
+  todoModalSubtext.innerText = 'タスクの内容や指定日時・時間を変更できます';
   todoTitleInput.value = todo.title;
+
+  const scheduleType = todo.scheduleType || 'repeat';
+  setModalScheduleType(scheduleType);
 
   const repeatType = todo.repeatType || todo.repeat || 'daily';
   todoRepeatSelect.value = repeatType;
+  todoDateInput.value = todo.specificDate || getTodayDateString();
+  todoTimeInput.value = todo.targetTime || '';
 
-  // Handle weekday checkboxes
   const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
   checkboxes.forEach(cb => {
     cb.checked = Array.isArray(todo.days) && todo.days.includes(cb.value);
   });
 
-  if (repeatType === 'weekly') {
+  if (scheduleType === 'repeat' && repeatType === 'weekly') {
     todoDaysSelector.classList.remove('hidden');
   } else {
     todoDaysSelector.classList.add('hidden');
@@ -687,10 +750,19 @@ function handleSaveTodo() {
   }
 
   const editId = todoEditIdInput.value ? Number(todoEditIdInput.value) : null;
+  const scheduleType = activeScheduleType;
   const repeatType = todoRepeatSelect.value;
+  const specificDate = todoDateInput.value;
+  const targetTime = todoTimeInput.value; // 'HH:MM' or ''
+
   let selectedDays = [];
 
-  if (repeatType === 'weekly') {
+  if (scheduleType === 'specific_date') {
+    if (!specificDate) {
+      alert("特定の日付を選択してください");
+      return;
+    }
+  } else if (repeatType === 'weekly') {
     const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
     checkboxes.forEach(cb => selectedDays.push(cb.value));
     
@@ -703,20 +775,24 @@ function handleSaveTodo() {
   }
 
   if (editId) {
-    // Edit existing Todo
     const existing = state.todos.find(t => t.id === editId);
     if (existing) {
       existing.title = title;
+      existing.scheduleType = scheduleType;
       existing.repeatType = repeatType;
       existing.days = selectedDays;
+      existing.specificDate = specificDate;
+      existing.targetTime = targetTime;
     }
   } else {
-    // Create new Todo
     const newTodo = {
       id: Date.now(),
       title: title,
+      scheduleType: scheduleType,
       repeatType: repeatType,
       days: selectedDays,
+      specificDate: specificDate,
+      targetTime: targetTime,
       completedDates: []
     };
     state.todos.push(newTodo);
@@ -752,10 +828,17 @@ function initUI() {
     });
   });
 
-  // 4. Habit ToDo Modal Open, Select Repeat & Save Listener
+  // 4. Habit ToDo Modal Listeners
   addTodoModalBtn.addEventListener('click', openAddTodoModal);
   managerAddTodoBtn.addEventListener('click', openAddTodoModal);
   cancelTodoBtn.addEventListener('click', () => todoModal.classList.add('hidden'));
+
+  schedTypeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.getAttribute('data-type');
+      setModalScheduleType(type);
+    });
+  });
 
   todoRepeatSelect.addEventListener('change', () => {
     if (todoRepeatSelect.value === 'weekly') {
@@ -1064,30 +1147,27 @@ function renderHomeTodoList() {
     item.innerHTML = `
       <div class="todo-left-content">
         <div class="todo-custom-checkbox" title="完了チェックの切替">${isCompleted ? '✓' : ''}</div>
-        <div class="todo-title-clickable" title="タップして修正・変更">
+        <div class="todo-title-clickable" title="タップして日時・時間を編集">
           <span class="todo-item-title">${escapeHTML(todo.title)}</span>
           <span class="todo-edit-icon">✏️</span>
         </div>
       </div>
       <div class="todo-right-controls">
-        <span class="todo-repeat-tag">${getRepeatLabel(todo)}</span>
+        <span class="todo-repeat-tag">${getScheduleLabel(todo)}</span>
         <button class="todo-delete-btn home-todo-del-btn" data-id="${todo.id}" title="削除">🗑️ 削除</button>
       </div>
     `;
 
-    // Toggle completion on checkbox click
     item.querySelector('.todo-custom-checkbox').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleTodoCompletion(todo.id);
     });
 
-    // Open Edit Modal on tapping title area
     item.querySelector('.todo-title-clickable').addEventListener('click', (e) => {
       e.stopPropagation();
       openEditTodoModal(todo);
     });
 
-    // Delete item directly from Home Screen ToDo list
     item.querySelector('.home-todo-del-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       deleteHabitTodo(todo.id);
@@ -1116,12 +1196,12 @@ function renderTodoManagerList() {
     item.className = 'todo-item';
 
     item.innerHTML = `
-      <div class="todo-title-clickable" style="display:flex; align-items:center; gap:8px;" title="タップして修正・変更">
+      <div class="todo-title-clickable" style="display:flex; align-items:center; gap:8px;" title="タップして日時・時間を編集">
         <span class="todo-item-title">${escapeHTML(todo.title)}</span>
         <span class="todo-edit-icon">✏️</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
-        <span class="todo-repeat-tag">${getRepeatLabel(todo)}</span>
+        <span class="todo-repeat-tag">${getScheduleLabel(todo)}</span>
         <button class="todo-delete-btn manager-todo-del-btn" data-id="${todo.id}">🗑️ 削除</button>
       </div>
     `;

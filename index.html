@@ -152,7 +152,7 @@
               <span>追加</span>
             </button>
           </div>
-          <p class="todo-hint-text">チェックで <b>+1</b> 加算！タスク名をタップで内容・曜日を編集できます ✏️</p>
+          <p class="todo-hint-text">チェックで <b>+1</b> 加算！タスク名をタップで日時・時間を編集できます ✏️</p>
           <div id="home-todo-list" class="home-todo-list">
             <!-- Dynamically rendered items -->
           </div>
@@ -233,9 +233,9 @@
         <div class="pack-selector-card" style="margin-top: 16px;">
           <div class="pack-header">
             <h3>⚙️ 習慣ToDoの設定・管理</h3>
-            <span class="pack-badge">複数曜日・編集可能</span>
+            <span class="pack-badge">日時・時間指定可能</span>
           </div>
-          <p class="pack-desc">習慣の編集や繰り返す曜日の変更が可能です</p>
+          <p class="pack-desc">習慣の内容や指定する曜日・特定の日付、時間を編集できます</p>
           <div id="todo-manager-list" class="todo-manager-list">
             <!-- Rendered dynamically -->
           </div>
@@ -307,12 +307,23 @@
       
       <input type="hidden" id="todo-edit-id-input" value="">
 
+      <!-- Title Input -->
       <div class="todo-form-group">
         <label for="todo-title-input" class="form-label">習慣のタイトル</label>
         <input type="text" id="todo-title-input" class="text-input" placeholder="例：朝のお水を1杯飲む 💧" maxlength="40">
       </div>
 
+      <!-- Schedule Type Selector (Repeat vs Specific Date) -->
       <div class="todo-form-group" style="margin-top: 12px;">
+        <label class="form-label">指定方法</label>
+        <div class="schedule-type-toggle">
+          <button type="button" class="sched-type-btn active" data-type="repeat">🔁 曜日・繰り返し</button>
+          <button type="button" class="sched-type-btn" data-type="specific_date">📅 特定の日付指定</button>
+        </div>
+      </div>
+
+      <!-- Repeat Options (Shown when scheduleType === 'repeat') -->
+      <div id="todo-repeat-group" class="todo-form-group" style="margin-top: 10px;">
         <label for="todo-repeat-select" class="form-label">繰り返し設定</label>
         <select id="todo-repeat-select" class="select-input">
           <option value="daily">毎日（月〜日）</option>
@@ -320,20 +331,32 @@
           <option value="weekends">土日・休日</option>
           <option value="weekly">毎週（複数曜日を指定）</option>
         </select>
+
+        <!-- Multi-Weekday Selector Checkboxes (Shown when repeat === 'weekly') -->
+        <div id="todo-days-selector" class="todo-days-selector hidden" style="margin-top: 8px;">
+          <label class="form-label">取り組む曜日（複数選択可能）</label>
+          <div class="weekday-checkboxes-grid">
+            <label class="weekday-btn"><input type="checkbox" value="mon"><span>月</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="tue"><span>火</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="wed"><span>水</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="thu"><span>木</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="fri"><span>金</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="sat"><span>土</span></label>
+            <label class="weekday-btn"><input type="checkbox" value="sun"><span>日</span></label>
+          </div>
+        </div>
       </div>
 
-      <!-- Multi-Weekday Selector Checkboxes (Shown when repeat === 'weekly') -->
-      <div id="todo-days-selector" class="todo-days-selector hidden" style="margin-top: 10px;">
-        <label class="form-label">取り組む曜日（複数選択可能）</label>
-        <div class="weekday-checkboxes-grid">
-          <label class="weekday-btn"><input type="checkbox" value="mon"><span>月</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="tue"><span>火</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="wed"><span>水</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="thu"><span>木</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="fri"><span>金</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="sat"><span>土</span></label>
-          <label class="weekday-btn"><input type="checkbox" value="sun"><span>日</span></label>
-        </div>
+      <!-- Specific Date Input (Shown when scheduleType === 'specific_date') -->
+      <div id="todo-date-group" class="todo-form-group hidden" style="margin-top: 10px;">
+        <label for="todo-date-input" class="form-label">特定の日付（カレンダー）</label>
+        <input type="date" id="todo-date-input" class="text-input">
+      </div>
+
+      <!-- Time Setting Input (HH:MM) -->
+      <div class="todo-form-group" style="margin-top: 12px;">
+        <label for="todo-time-input" class="form-label">時間指定（任意） ⏰</label>
+        <input type="time" id="todo-time-input" class="text-input">
       </div>
 
       <div class="modal-actions" style="margin-top: 20px;">

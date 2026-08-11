@@ -1,6 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.5
+ * Self-Esteem Boosting Mobile Web App v3.6
+ * Complete Fix for Repeat Preset vs Weekly Multi-Day Conflict & Safe Error Handling
  */
 
 // ==========================================
@@ -182,7 +183,7 @@ function getLevelInfo(totalCount) {
 }
 
 // ==========================================
-// 3. DAY NORMALIZATION SYSTEM (0=SUN, 6=SAT)
+// 3. ROBUST DAY MAPPING DICTIONARY
 // ==========================================
 const DAY_MAP = {
   0: 0, '0': 0, 'sun': 0, 'Sunday': 0, '日': 0,
@@ -197,8 +198,35 @@ const DAY_MAP = {
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
+// Helper to sanitize any todo item into a valid data structure
+function sanitizeTodo(todo) {
+  if (!todo || typeof todo !== 'object') {
+    return {
+      id: Date.now(),
+      title: '習慣タスク',
+      scheduleType: 'repeat',
+      repeatType: 'daily',
+      days: ['sun','mon','tue','wed','thu','fri','sat'],
+      specificDate: '',
+      targetTime: '',
+      completedDates: []
+    };
+  }
+
+  return {
+    id: todo.id || Date.now(),
+    title: todo.title || '無題のタスク',
+    scheduleType: todo.scheduleType === 'specific_date' ? 'specific_date' : 'repeat',
+    repeatType: todo.repeatType || todo.repeat || 'daily',
+    days: Array.isArray(todo.days) ? todo.days : ['sun','mon','tue','wed','thu','fri','sat'],
+    specificDate: todo.specificDate || '',
+    targetTime: todo.targetTime || '',
+    completedDates: Array.isArray(todo.completedDates) ? todo.completedDates : []
+  };
+}
+
 // ==========================================
-// 4. APP STATE MANAGEMENT & DATA MIGRATION
+// 4. APP STATE MANAGEMENT & STORAGE MIGRATION
 // ==========================================
 let state = {
   todayCount: 0,
@@ -222,85 +250,72 @@ const LEGACY_STORAGE_KEYS = ['hometama_app_state_v1', 'hometama_app_state_v2'];
 const CURRENT_STORAGE_KEY = 'hometama_app_state_v3';
 
 function loadState() {
-  let mergedData = {};
+  try {
+    let mergedData = {};
 
-  LEGACY_STORAGE_KEYS.forEach(key => {
-    const raw = localStorage.getItem(key);
-    if (raw) {
+    LEGACY_STORAGE_KEYS.forEach(key => {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          mergedData = { ...mergedData, ...parsed };
+        } catch (e) {}
+      }
+    });
+
+    const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY);
+    if (currentRaw) {
       try {
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(currentRaw);
         mergedData = { ...mergedData, ...parsed };
       } catch (e) {}
     }
-  });
 
-  const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY);
-  if (currentRaw) {
-    try {
-      const parsed = JSON.parse(currentRaw);
-      mergedData = { ...mergedData, ...parsed };
-    } catch (e) {}
-  }
+    state = { ...state, ...mergedData };
+    state.todayCount = Math.max(0, state.todayCount || 0);
+    state.totalCount = Math.max(0, state.totalCount || 0);
 
-  state = { ...state, ...mergedData };
-
-  state.todayCount = Math.max(0, state.todayCount || 0);
-  state.totalCount = Math.max(0, state.totalCount || 0);
-
-  if (state.todos && Array.isArray(state.todos)) {
-    state.todos = state.todos.map(t => {
-      if (!t.scheduleType) t.scheduleType = 'repeat';
-      if (!t.specificDate) t.specificDate = '';
-      if (t.targetTime === undefined) t.targetTime = '';
-
-      if (!t.repeatType) {
-        if (t.repeat === 'daily' || t.repeat === 'weekdays' || t.repeat === 'weekends') {
-          t.repeatType = t.repeat;
-          if (t.repeat === 'daily') t.days = ['mon','tue','wed','thu','fri','sat','sun'];
-          if (t.repeat === 'weekdays') t.days = ['mon','tue','wed','thu','fri'];
-          if (t.repeat === 'weekends') t.days = ['sat','sun'];
-        } else if (typeof t.repeat === 'string') {
-          t.repeatType = 'weekly';
-          t.days = [t.repeat];
-        } else {
-          t.repeatType = 'daily';
-          t.days = ['mon','tue','wed','thu','fri','sat','sun'];
-        }
-      }
-      return t;
-    });
-  } else {
-    state.todos = [
-      { id: 1, title: '💧 水を1杯飲む', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '07:30', completedDates: [] },
-      { id: 2, title: '🧘‍♂️ 1分間の深呼吸', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '12:00', completedDates: [] },
-      { id: 3, title: '✨ できたことを1つメモする', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '21:00', completedDates: [] }
-    ];
-  }
-
-  const todayStr = new Date().toDateString();
-  if (state.lastActiveDate !== todayStr) {
-    const lastDate = new Date(state.lastActiveDate);
-    const now = new Date();
-    const diffDays = Math.round((now - lastDate) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) {
-      state.streakCount += 1;
-    } else if (diffDays > 1) {
-      state.streakCount = 1;
+    if (state.todos && Array.isArray(state.todos)) {
+      state.todos = state.todos.map(sanitizeTodo);
+    } else {
+      state.todos = [
+        { id: 1, title: '💧 水を1杯飲む', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '07:30', completedDates: [] },
+        { id: 2, title: '🧘‍♂️ 1分間の深呼吸', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '12:00', completedDates: [] },
+        { id: 3, title: '✨ できたことを1つメモする', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '21:00', completedDates: [] }
+      ];
     }
-    state.todayCount = 0;
-    state.lastActiveDate = todayStr;
+
+    const todayStr = new Date().toDateString();
+    if (state.lastActiveDate !== todayStr) {
+      const lastDate = new Date(state.lastActiveDate);
+      const now = new Date();
+      const diffDays = Math.round((now - lastDate) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        state.streakCount += 1;
+      } else if (diffDays > 1) {
+        state.streakCount = 1;
+      }
+      state.todayCount = 0;
+      state.lastActiveDate = todayStr;
+    }
+  } catch (err) {
+    console.error("loadState error:", err);
   }
 
   saveState();
 }
 
 function saveState() {
-  localStorage.setItem(CURRENT_STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(CURRENT_STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.error("saveState error:", err);
+  }
 }
 
 // ==========================================
-// 5. HABIT TODO REPEAT & DATE/TIME LOGIC
+// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -308,141 +323,162 @@ function getTodayDateString() {
 }
 
 function isTodoActiveToday(todo) {
-  const todayStr = getTodayDateString();
-  const scheduleType = todo.scheduleType || 'repeat';
+  try {
+    if (!todo) return false;
+    const todayStr = getTodayDateString();
+    const scheduleType = todo.scheduleType || 'repeat';
 
-  // 1. Specific Date Check
-  if (scheduleType === 'specific_date') {
-    return todo.specificDate === todayStr;
-  }
+    // 1. Specific Date Check
+    if (scheduleType === 'specific_date') {
+      return todo.specificDate === todayStr;
+    }
 
-  // 2. Repeat Schedule Check
-  const now = new Date();
-  const todayIndex = now.getDay(); // 0 = Sunday, 1 = Mon, ..., 6 = Saturday
-  const todayKey = DAY_KEYS[todayIndex]; // 'sun', 'mon', ..., 'sat'
+    // 2. Repeat Schedule Check
+    const now = new Date();
+    const todayIndex = now.getDay(); // 0 = Sunday, 1 = Mon, ..., 6 = Saturday
+    const todayKey = DAY_KEYS[todayIndex]; // 'sun', 'mon', ..., 'sat'
 
-  const type = todo.repeatType || todo.repeat || 'daily';
+    const type = todo.repeatType || todo.repeat || 'daily';
 
-  if (type === 'daily') return true;
-  if (type === 'weekdays') return todayIndex >= 1 && todayIndex <= 5;
-  if (type === 'weekends') return todayIndex === 0 || todayIndex === 6;
+    if (type === 'daily') return true;
+    if (type === 'weekdays') return todayIndex >= 1 && todayIndex <= 5;
+    if (type === 'weekends') return todayIndex === 0 || todayIndex === 6;
 
-  // Multi-weekday check for 'weekly' or when todo.days array is populated
-  if (type === 'weekly' || Array.isArray(todo.days)) {
+    // Multi-weekday check for 'weekly'
+    if (type === 'weekly') {
+      if (Array.isArray(todo.days) && todo.days.length > 0) {
+        return todo.days.some(d => {
+          const norm = DAY_MAP[d];
+          return norm === todayIndex || d === todayKey;
+        });
+      }
+      return true;
+    }
+
+    // Single day string or fallback
     if (Array.isArray(todo.days) && todo.days.length > 0) {
       return todo.days.some(d => {
         const norm = DAY_MAP[d];
         return norm === todayIndex || d === todayKey;
       });
     }
+
+    return true;
+  } catch (err) {
+    console.error("isTodoActiveToday error:", err);
     return true;
   }
-
-  if (typeof type === 'string') {
-    const normType = DAY_MAP[type];
-    if (normType === todayIndex || type === todayKey) return true;
-  }
-
-  return false;
 }
 
 function getScheduleLabel(todo) {
-  let label = '';
-  const scheduleType = todo.scheduleType || 'repeat';
+  try {
+    let label = '';
+    const scheduleType = todo.scheduleType || 'repeat';
 
-  if (scheduleType === 'specific_date' && todo.specificDate) {
-    const parts = todo.specificDate.split('-');
-    if (parts.length === 3) {
-      label = `📅 ${Number(parts[1])}/${Number(parts[2])}`;
+    if (scheduleType === 'specific_date' && todo.specificDate) {
+      const parts = todo.specificDate.split('-');
+      if (parts.length === 3) {
+        label = `📅 ${Number(parts[1])}/${Number(parts[2])}`;
+      } else {
+        label = `📅 ${todo.specificDate}`;
+      }
     } else {
-      label = `📅 ${todo.specificDate}`;
+      const type = todo.repeatType || todo.repeat || 'daily';
+      if (type === 'daily') label = '毎日';
+      else if (type === 'weekdays') label = '平日';
+      else if (type === 'weekends') label = '土日・休日';
+      else if (type === 'weekly' && Array.isArray(todo.days) && todo.days.length > 0) {
+        const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
+        
+        const sortedDays = [...todo.days].sort((a, b) => {
+          const ia = dayOrder.indexOf(a) !== -1 ? dayOrder.indexOf(a) : DAY_MAP[a];
+          const ib = dayOrder.indexOf(b) !== -1 ? dayOrder.indexOf(b) : DAY_MAP[b];
+          return ia - ib;
+        });
+
+        label = sortedDays.map(d => dayNames[d] || DAY_NAMES_JA[DAY_MAP[d]] || d).join('・');
+      } else {
+        label = '毎日';
+      }
     }
-  } else {
-    const type = todo.repeatType || todo.repeat || 'daily';
-    if (type === 'daily') label = '毎日';
-    else if (type === 'weekdays') label = '平日';
-    else if (type === 'weekends') label = '土日・休日';
-    else if ((type === 'weekly' || Array.isArray(todo.days)) && Array.isArray(todo.days) && todo.days.length > 0) {
-      const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-      const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
-      
-      const sortedDays = [...todo.days].sort((a, b) => {
-        const ia = dayOrder.indexOf(a) !== -1 ? dayOrder.indexOf(a) : DAY_MAP[a];
-        const ib = dayOrder.indexOf(b) !== -1 ? dayOrder.indexOf(b) : DAY_MAP[b];
-        return ia - ib;
-      });
 
-      label = sortedDays.map(d => dayNames[d] || DAY_NAMES_JA[DAY_MAP[d]] || d).join('・');
-    } else {
-      label = '毎日';
+    if (todo.targetTime) {
+      label += ` ⏰ ${todo.targetTime}`;
     }
-  }
 
-  if (todo.targetTime) {
-    label += ` ⏰ ${todo.targetTime}`;
+    return label;
+  } catch (err) {
+    return '毎日';
   }
-
-  return label;
 }
 
 function toggleTodoCompletion(todoId) {
-  const todayStr = getTodayDateString();
-  const todo = state.todos.find(t => t.id === todoId);
-  if (!todo) return;
+  try {
+    const todayStr = getTodayDateString();
+    const todo = state.todos.find(t => t.id === todoId);
+    if (!todo) return;
 
-  const isCompleted = todo.completedDates.includes(todayStr);
+    const isCompleted = todo.completedDates.includes(todayStr);
 
-  if (!isCompleted) {
-    todo.completedDates.push(todayStr);
-    state.todayCount += 1;
-    state.totalCount += 1;
+    if (!isCompleted) {
+      todo.completedDates.push(todayStr);
+      state.todayCount += 1;
+      state.totalCount += 1;
 
-    playCelebrationSound();
-    triggerConfetti();
+      playCelebrationSound();
+      triggerConfetti();
 
-    createFloatingText(`+1 ${todo.title} 完了! 🎉`);
-    updateComplimentMessage();
-    checkMilestoneUnlocked();
-  } else {
-    todo.completedDates = todo.completedDates.filter(d => d !== todayStr);
-    state.todayCount = Math.max(0, state.todayCount - 1);
-    state.totalCount = Math.max(0, state.totalCount - 1);
+      createFloatingText(`+1 ${todo.title} 完了! 🎉`);
+      updateComplimentMessage();
+      checkMilestoneUnlocked();
+    } else {
+      todo.completedDates = todo.completedDates.filter(d => d !== todayStr);
+      state.todayCount = Math.max(0, state.todayCount - 1);
+      state.totalCount = Math.max(0, state.totalCount - 1);
 
-    if (state.soundEnabled) playTapSound();
-    createFloatingText(`-1 取消`);
+      if (state.soundEnabled) playTapSound();
+      createFloatingText(`-1 取消`);
+    }
+
+    saveState();
+    renderCounterStats();
+    renderLevelProgress();
+    renderHomeTodoList();
+    renderTodoManagerList();
+  } catch (err) {
+    console.error("toggleTodoCompletion error:", err);
   }
-
-  saveState();
-  renderCounterStats();
-  renderLevelProgress();
-  renderHomeTodoList();
-  renderTodoManagerList();
 }
 
 function createFloatingText(text) {
-  const floatEl = document.createElement('span');
-  floatEl.className = 'floating-plus';
-  floatEl.innerText = text;
+  try {
+    const floatEl = document.createElement('span');
+    floatEl.className = 'floating-plus';
+    floatEl.innerText = text;
 
-  const tapBtn = document.getElementById('tap-button');
-  const rect = tapBtn.getBoundingClientRect();
-  const x = rect.left + rect.width / 2 - 50;
-  const y = rect.top + rect.height / 2 - 20;
+    const tapBtn = document.getElementById('tap-button');
+    const rect = tapBtn.getBoundingClientRect();
+    const x = rect.left + rect.width / 2 - 50;
+    const y = rect.top + rect.height / 2 - 20;
 
-  floatEl.style.left = `${x}px`;
-  floatEl.style.top = `${y}px`;
-  floatEl.style.fontSize = '1.1rem';
+    floatEl.style.left = `${x}px`;
+    floatEl.style.top = `${y}px`;
+    floatEl.style.fontSize = '1.1rem';
 
-  document.body.appendChild(floatEl);
+    document.body.appendChild(floatEl);
 
-  setTimeout(() => floatEl.remove(), 900);
+    setTimeout(() => floatEl.remove(), 900);
+  } catch (e) {}
 }
 
 function deleteHabitTodo(id) {
-  state.todos = state.todos.filter(t => t.id !== id);
-  saveState();
-  renderHomeTodoList();
-  renderTodoManagerList();
+  try {
+    state.todos = state.todos.filter(t => t.id !== id);
+    saveState();
+    renderHomeTodoList();
+    renderTodoManagerList();
+  } catch (e) {}
 }
 
 // ==========================================
@@ -747,124 +783,132 @@ function openAddTodoModal() {
 }
 
 function openEditTodoModal(todo) {
-  todoEditIdInput.value = todo.id;
-  todoModalTitle.innerText = '習慣ToDoを編集';
-  todoModalSubtext.innerText = 'タスクの内容や指定日時・時間を変更できます';
-  todoTitleInput.value = todo.title;
+  try {
+    const cleanTodo = sanitizeTodo(todo);
+    todoEditIdInput.value = cleanTodo.id;
+    todoModalTitle.innerText = '習慣ToDoを編集';
+    todoModalSubtext.innerText = 'タスクの内容や指定日時・時間を変更できます';
+    todoTitleInput.value = cleanTodo.title;
 
-  const scheduleType = todo.scheduleType || 'repeat';
-  setModalScheduleType(scheduleType);
+    setModalScheduleType(cleanTodo.scheduleType);
 
-  const repeatType = todo.repeatType || todo.repeat || 'daily';
-  if (repeatType === 'weekly' || Array.isArray(todo.days)) {
-    todoRepeatSelect.value = 'weekly';
-  } else {
-    todoRepeatSelect.value = repeatType;
+    // Exact repeatType match to prevent preset vs weekly confusion
+    const rType = cleanTodo.repeatType;
+    if (rType === 'daily' || rType === 'weekdays' || rType === 'weekends' || rType === 'weekly') {
+      todoRepeatSelect.value = rType;
+    } else {
+      todoRepeatSelect.value = 'weekly';
+    }
+
+    todoDateInput.value = cleanTodo.specificDate || getTodayDateString();
+    todoTimeInput.value = cleanTodo.targetTime || '';
+
+    // Populate checkboxes according to cleanTodo.days
+    const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = Array.isArray(cleanTodo.days) && cleanTodo.days.some(d => d === cb.value || DAY_MAP[d] === DAY_MAP[cb.value]);
+    });
+
+    if (cleanTodo.scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
+      todoDaysSelector.classList.remove('hidden');
+    } else {
+      todoDaysSelector.classList.add('hidden');
+    }
+
+    todoModal.classList.remove('hidden');
+    todoTitleInput.focus();
+  } catch (err) {
+    console.error("openEditTodoModal error:", err);
   }
-
-  todoDateInput.value = todo.specificDate || getTodayDateString();
-  todoTimeInput.value = todo.targetTime || '';
-
-  const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
-  checkboxes.forEach(cb => {
-    const isChecked = Array.isArray(todo.days) && todo.days.some(d => d === cb.value || DAY_MAP[d] === DAY_MAP[cb.value]);
-    cb.checked = isChecked;
-  });
-
-  if (scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
-    todoDaysSelector.classList.remove('hidden');
-  } else {
-    todoDaysSelector.classList.add('hidden');
-  }
-
-  todoModal.classList.remove('hidden');
-  todoTitleInput.focus();
 }
 
 function handleSaveTodo() {
-  const title = todoTitleInput.value.trim();
-  if (!title) {
-    todoTitleInput.focus();
-    return;
-  }
-
-  const editId = todoEditIdInput.value ? Number(todoEditIdInput.value) : null;
-  const scheduleType = activeScheduleType;
-  const repeatType = todoRepeatSelect.value;
-  const specificDate = todoDateInput.value;
-  const targetTime = todoTimeInput.value;
-
-  let selectedDays = [];
-
-  if (scheduleType === 'specific_date') {
-    if (!specificDate) {
-      alert("特定の日付を選択してください");
+  try {
+    const title = todoTitleInput.value.trim();
+    if (!title) {
+      todoTitleInput.focus();
       return;
     }
-    selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
-  } else if (repeatType === 'weekly') {
-    const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
-    checkboxes.forEach(cb => selectedDays.push(cb.value));
-    
-    if (selectedDays.length === 0) {
-      alert("取り組む曜日を1つ以上選択してください");
-      return;
-    }
-  } else if (repeatType === 'weekdays') {
-    selectedDays = ['mon','tue','wed','thu','fri'];
-  } else if (repeatType === 'weekends') {
-    selectedDays = ['sat','sun'];
-  } else {
-    selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
-  }
 
-  if (editId) {
-    const existing = state.todos.find(t => t.id === editId);
-    if (existing) {
-      existing.title = title;
-      existing.scheduleType = scheduleType;
-      existing.repeatType = repeatType;
-      existing.days = selectedDays;
-      existing.specificDate = specificDate;
-      existing.targetTime = targetTime;
-    }
-  } else {
-    const newTodo = {
-      id: Date.now(),
-      title: title,
-      scheduleType: scheduleType,
-      repeatType: repeatType,
-      days: selectedDays,
-      specificDate: specificDate,
-      targetTime: targetTime,
-      completedDates: []
-    };
-    state.todos.push(newTodo);
-  }
+    const editId = todoEditIdInput.value ? Number(todoEditIdInput.value) : null;
+    const scheduleType = activeScheduleType;
+    const repeatType = todoRepeatSelect.value;
+    const specificDate = todoDateInput.value;
+    const targetTime = todoTimeInput.value;
 
-  saveState();
-  renderHomeTodoList();
-  renderTodoManagerList();
-  todoModal.classList.add('hidden');
+    let selectedDays = [];
+
+    if (scheduleType === 'specific_date') {
+      if (!specificDate) {
+        alert("特定の日付を選択してください");
+        return;
+      }
+      selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
+    } else if (repeatType === 'weekly') {
+      const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
+      checkboxes.forEach(cb => selectedDays.push(cb.value));
+      
+      // Fallback if no checkbox checked
+      if (selectedDays.length === 0) {
+        alert("取り組む曜日を1つ以上選択してください");
+        return;
+      }
+    } else if (repeatType === 'weekdays') {
+      selectedDays = ['mon','tue','wed','thu','fri'];
+    } else if (repeatType === 'weekends') {
+      selectedDays = ['sat','sun'];
+    } else {
+      selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
+    }
+
+    if (editId) {
+      const idx = state.todos.findIndex(t => t.id === editId);
+      if (idx !== -1) {
+        state.todos[idx] = sanitizeTodo({
+          ...state.todos[idx],
+          title: title,
+          scheduleType: scheduleType,
+          repeatType: repeatType,
+          days: selectedDays,
+          specificDate: specificDate,
+          targetTime: targetTime
+        });
+      }
+    } else {
+      const newTodo = sanitizeTodo({
+        id: Date.now(),
+        title: title,
+        scheduleType: scheduleType,
+        repeatType: repeatType,
+        days: selectedDays,
+        specificDate: specificDate,
+        targetTime: targetTime,
+        completedDates: []
+      });
+      state.todos.push(newTodo);
+    }
+
+    saveState();
+    renderHomeTodoList();
+    renderTodoManagerList();
+    todoModal.classList.add('hidden');
+  } catch (err) {
+    console.error("handleSaveTodo error:", err);
+    alert("保存中にエラーが発生しました。入力内容をご確認ください。");
+  }
 }
 
 function initUI() {
-  // 1. One-tap Counter Listener
   tapButton.addEventListener('click', handleTap);
 
-  // 2. Main Display Mode Switchers
   modeTodayBtn.addEventListener('click', () => setDisplayMode('today'));
   modeTotalBtn.addEventListener('click', () => setDisplayMode('total'));
   statBoxToday.addEventListener('click', () => setDisplayMode('today'));
   statBoxTotal.addEventListener('click', () => setDisplayMode('total'));
 
-  // 3. Theme Selector Modal
-  themeModalBtn.addEventListener('click', () => {
-    themeModal.classList.remove('hidden');
-  });
-  themeCloseBtn.addEventListener('click', () => {
-    themeModal.classList.add('hidden');
-  });
+  themeModalBtn.addEventListener('click', () => themeModal.classList.remove('hidden'));
+  themeCloseBtn.addEventListener('click', () => themeModal.classList.add('hidden'));
+  
   document.querySelectorAll('.theme-option-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const theme = btn.getAttribute('data-theme');
@@ -872,7 +916,6 @@ function initUI() {
     });
   });
 
-  // 4. Habit ToDo Modal Listeners
   addTodoModalBtn.addEventListener('click', openAddTodoModal);
   managerAddTodoBtn.addEventListener('click', openAddTodoModal);
   cancelTodoBtn.addEventListener('click', () => todoModal.classList.add('hidden'));
@@ -894,7 +937,6 @@ function initUI() {
 
   saveTodoBtn.addEventListener('click', handleSaveTodo);
 
-  // 5. Sound Toggle Listener
   updateSoundUI();
   soundToggleBtn.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
@@ -902,7 +944,6 @@ function initUI() {
     saveState();
   });
 
-  // 6. Bottom Tab Switching Listener
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetTab = item.getAttribute('data-tab');
@@ -910,7 +951,6 @@ function initUI() {
     });
   });
 
-  // 7. Memo Category Pills
   categoryPills.forEach(pill => {
     pill.addEventListener('click', () => {
       categoryPills.forEach(p => p.classList.remove('active'));
@@ -919,7 +959,6 @@ function initUI() {
     });
   });
 
-  // 8. Prompt Chips
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.getAttribute('data-prompt');
@@ -929,13 +968,9 @@ function initUI() {
     });
   });
 
-  // 9. Memo Input Char Counter
   memoInput.addEventListener('input', updateCharCount);
-
-  // 10. Add Memo Button
   addMemoBtn.addEventListener('click', handleAddMemo);
 
-  // 11. Memo Filter Tabs
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
@@ -945,12 +980,8 @@ function initUI() {
     });
   });
 
-  // 12. Close Modal Listener
-  modalCloseBtn.addEventListener('click', () => {
-    milestoneModal.classList.add('hidden');
-  });
+  modalCloseBtn.addEventListener('click', () => milestoneModal.classList.add('hidden'));
 
-  // 13. Quick Stats Button Modal
   document.getElementById('stats-modal-btn').addEventListener('click', () => {
     switchTab('tab-records');
   });
@@ -981,41 +1012,43 @@ function handleTap(e) {
 }
 
 function createFloatingPlus(e) {
-  const floatEl = document.createElement('span');
-  floatEl.className = 'floating-plus';
-  floatEl.innerText = '+1 ❤️';
-  
-  const rect = tapButton.getBoundingClientRect();
-  const x = (e.clientX || rect.left + rect.width / 2) - 30;
-  const y = (e.clientY || rect.top + rect.height / 2) - 20;
+  try {
+    const floatEl = document.createElement('span');
+    floatEl.className = 'floating-plus';
+    floatEl.innerText = '+1 ❤️';
+    
+    const rect = tapButton.getBoundingClientRect();
+    const x = (e.clientX || rect.left + rect.width / 2) - 30;
+    const y = (e.clientY || rect.top + rect.height / 2) - 20;
 
-  floatEl.style.left = `${x}px`;
-  floatEl.style.top = `${y}px`;
+    floatEl.style.left = `${x}px`;
+    floatEl.style.top = `${y}px`;
 
-  document.body.appendChild(floatEl);
+    document.body.appendChild(floatEl);
 
-  setTimeout(() => {
-    floatEl.remove();
-  }, 800);
+    setTimeout(() => floatEl.remove(), 800);
+  } catch (e) {}
 }
 
 function createButtonRipple(e) {
-  const ripple = document.createElement('span');
-  ripple.className = 'click-ripple';
+  try {
+    const ripple = document.createElement('span');
+    ripple.className = 'click-ripple';
 
-  const rect = tapButton.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  ripple.style.width = ripple.style.height = `${size}px`;
+    const rect = tapButton.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
 
-  const x = (e.clientX ? e.clientX - rect.left : rect.width / 2) - size / 2;
-  const y = (e.clientY ? e.clientY - rect.top : rect.height / 2) - size / 2;
+    const x = (e.clientX ? e.clientX - rect.left : rect.width / 2) - size / 2;
+    const y = (e.clientY ? e.clientY - rect.top : rect.height / 2) - size / 2;
 
-  ripple.style.left = `${x}px`;
-  ripple.style.top = `${y}px`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
 
-  tapButton.appendChild(ripple);
+    tapButton.appendChild(ripple);
 
-  setTimeout(() => ripple.remove(), 500);
+    setTimeout(() => ripple.remove(), 500);
+  } catch (e) {}
 }
 
 function updateComplimentMessage() {
@@ -1155,6 +1188,7 @@ function renderMemoList() {
 }
 
 function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
   return str.replace(/[&<>'"]/g, 
     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
   );
@@ -1166,11 +1200,13 @@ function escapeHTML(str) {
 function renderHomeTodoList() {
   const container = document.getElementById('home-todo-list');
   const badge = document.getElementById('home-todo-badge');
+  if (!container || !badge) return;
+
   container.innerHTML = '';
 
   const activeTodos = state.todos.filter(isTodoActiveToday);
   const todayStr = getTodayDateString();
-  const completedCount = activeTodos.filter(t => t.completedDates.includes(todayStr)).length;
+  const completedCount = activeTodos.filter(t => t.completedDates && t.completedDates.includes(todayStr)).length;
 
   badge.innerText = `${completedCount}/${activeTodos.length} 完了`;
 
@@ -1184,7 +1220,7 @@ function renderHomeTodoList() {
   }
 
   activeTodos.forEach(todo => {
-    const isCompleted = todo.completedDates.includes(todayStr);
+    const isCompleted = todo.completedDates && todo.completedDates.includes(todayStr);
     const item = document.createElement('div');
     item.className = `todo-item ${isCompleted ? 'completed' : ''}`;
 
@@ -1328,8 +1364,8 @@ function renderLevelProgress() {
 }
 
 function renderRecords() {
-  // 1. Render Quote Pack Selectors
   const packContainer = document.getElementById('quote-pack-selector');
+  if (!packContainer) return;
   packContainer.innerHTML = '';
 
   Object.values(QUOTE_PACKS).forEach(pack => {
@@ -1356,53 +1392,52 @@ function renderRecords() {
     packContainer.appendChild(btn);
   });
 
-  // 2. Render Todo Manager
   renderTodoManagerList();
 
-  // 3. Render Badges Grid
   const badgesGrid = document.getElementById('badges-grid');
-  badgesGrid.innerHTML = '';
+  if (badgesGrid) {
+    badgesGrid.innerHTML = '';
+    PREDEFINED_MILESTONES.forEach(ms => {
+      const isUnlocked = state.unlockedMilestones.includes(ms.count);
+      const item = document.createElement('div');
+      item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'}`;
 
-  PREDEFINED_MILESTONES.forEach(ms => {
-    const isUnlocked = state.unlockedMilestones.includes(ms.count);
-    const item = document.createElement('div');
-    item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+      const [emoji, name] = ms.badge.split(' ');
 
-    const [emoji, name] = ms.badge.split(' ');
+      item.innerHTML = `
+        <div class="badge-icon">${isUnlocked ? emoji : '🔒'}</div>
+        <div class="badge-name">${name || ms.badge}</div>
+        <div class="badge-condition">${ms.count}回タップ</div>
+      `;
 
-    item.innerHTML = `
-      <div class="badge-icon">${isUnlocked ? emoji : '🔒'}</div>
-      <div class="badge-name">${name || ms.badge}</div>
-      <div class="badge-condition">${ms.count}回タップ</div>
-    `;
-
-    badgesGrid.appendChild(item);
-  });
-
-  // 4. Render Unlocked Quotes
-  const quotesList = document.getElementById('unlocked-quotes-list');
-  quotesList.innerHTML = '';
-
-  const unlockedMs = PREDEFINED_MILESTONES.filter(ms => state.unlockedMilestones.includes(ms.count));
-
-  if (unlockedMs.length === 0) {
-    quotesList.innerHTML = `
-      <div class="empty-memo-state">
-        <p style="font-size:0.8rem;">タップして目標回数を達成すると、ここに心が温まるスペシャルメッセージが追加されます✨</p>
-      </div>
-    `;
-    return;
+      badgesGrid.appendChild(item);
+    });
   }
 
-  unlockedMs.forEach(ms => {
-    const card = document.createElement('div');
-    card.className = 'quote-collect-card';
-    card.innerHTML = `
-      <div class="quote-collect-num">${ms.count}回達成</div>
-      <div class="quote-collect-body">${ms.quote}</div>
-    `;
-    quotesList.appendChild(card);
-  });
+  const quotesList = document.getElementById('unlocked-quotes-list');
+  if (quotesList) {
+    quotesList.innerHTML = '';
+    const unlockedMs = PREDEFINED_MILESTONES.filter(ms => state.unlockedMilestones.includes(ms.count));
+
+    if (unlockedMs.length === 0) {
+      quotesList.innerHTML = `
+        <div class="empty-memo-state">
+          <p style="font-size:0.8rem;">タップして目標回数を達成すると、ここに心が温まるスペシャルメッセージが追加されます✨</p>
+        </div>
+      `;
+      return;
+    }
+
+    unlockedMs.forEach(ms => {
+      const card = document.createElement('div');
+      card.className = 'quote-collect-card';
+      card.innerHTML = `
+        <div class="quote-collect-num">${ms.count}回達成</div>
+        <div class="quote-collect-body">${ms.quote}</div>
+      `;
+      quotesList.appendChild(card);
+    });
+  }
 }
 
 function renderAll() {

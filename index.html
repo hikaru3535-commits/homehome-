@@ -152,7 +152,7 @@
               <span>追加</span>
             </button>
           </div>
-          <p class="todo-hint-text">チェックを入れるとメインカウントが連動して **+1** されます！</p>
+          <p class="todo-hint-text">チェックで <b>+1</b> 加算！タスク名をタップで内容・曜日を編集できます ✏️</p>
           <div id="home-todo-list" class="home-todo-list">
             <!-- Dynamically rendered items -->
           </div>
@@ -233,9 +233,9 @@
         <div class="pack-selector-card" style="margin-top: 16px;">
           <div class="pack-header">
             <h3>⚙️ 習慣ToDoの設定・管理</h3>
-            <span class="pack-badge">繰り返し設定</span>
+            <span class="pack-badge">複数曜日・編集可能</span>
           </div>
-          <p class="pack-desc">毎日または指定した曜日に取り組む習慣を作成・編集できます</p>
+          <p class="pack-desc">習慣の編集や繰り返す曜日の変更が可能です</p>
           <div id="todo-manager-list" class="todo-manager-list">
             <!-- Rendered dynamically -->
           </div>
@@ -298,13 +298,15 @@
 
   </div>
 
-  <!-- Add Habit ToDo Modal -->
+  <!-- Add / Edit Habit ToDo Modal -->
   <div id="todo-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <div class="modal-badge-icon">✨</div>
-      <h3 class="modal-title">習慣ToDoを作成</h3>
-      <p class="modal-count-text">毎日・定期的に続けたいタスクを登録しよう</p>
+      <div class="modal-badge-icon" id="todo-modal-icon">✨</div>
+      <h3 class="modal-title" id="todo-modal-title">習慣ToDoを作成</h3>
+      <p class="modal-count-text" id="todo-modal-subtext">毎日・定期的に続けたいタスクを登録しよう</p>
       
+      <input type="hidden" id="todo-edit-id-input" value="">
+
       <div class="todo-form-group">
         <label for="todo-title-input" class="form-label">習慣のタイトル</label>
         <input type="text" id="todo-title-input" class="text-input" placeholder="例：朝のお水を1杯飲む 💧" maxlength="40">
@@ -316,14 +318,22 @@
           <option value="daily">毎日（月〜日）</option>
           <option value="weekdays">平日（月〜金）</option>
           <option value="weekends">土日・休日</option>
-          <option value="mon">毎週 月曜日</option>
-          <option value="tue">毎週 火曜日</option>
-          <option value="wed">毎週 水曜日</option>
-          <option value="thu">毎週 木曜日</option>
-          <option value="fri">毎週 金曜日</option>
-          <option value="sat">毎週 土曜日</option>
-          <option value="sun">毎週 日曜日</option>
+          <option value="weekly">毎週（複数曜日を指定）</option>
         </select>
+      </div>
+
+      <!-- Multi-Weekday Selector Checkboxes (Shown when repeat === 'weekly') -->
+      <div id="todo-days-selector" class="todo-days-selector hidden" style="margin-top: 10px;">
+        <label class="form-label">取り組む曜日（複数選択可能）</label>
+        <div class="weekday-checkboxes-grid">
+          <label class="weekday-btn"><input type="checkbox" value="mon"><span>月</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="tue"><span>火</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="wed"><span>水</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="thu"><span>木</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="fri"><span>金</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="sat"><span>土</span></label>
+          <label class="weekday-btn"><input type="checkbox" value="sun"><span>日</span></label>
+        </div>
       </div>
 
       <div class="modal-actions" style="margin-top: 20px;">

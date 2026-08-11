@@ -746,16 +746,7 @@ html, body {
 .todo-left-content {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
-  cursor: pointer;
-}
-
-.todo-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
+  gap: 8px;
   flex: 1;
 }
 
@@ -772,6 +763,7 @@ html, body {
   flex-shrink: 0;
   font-weight: 800;
   font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .todo-item.completed .todo-custom-checkbox {
@@ -781,11 +773,33 @@ html, body {
   box-shadow: 0 2px 6px var(--primary-glow);
 }
 
+.todo-title-clickable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.todo-title-clickable:hover .todo-item-title {
+  color: var(--text-accent);
+}
+
 .todo-item-title {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-main);
   word-break: break-word;
+  transition: color 0.2s;
+}
+
+.todo-edit-icon {
+  font-size: 0.72rem;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.todo-title-clickable:hover .todo-edit-icon {
+  opacity: 1;
 }
 
 .todo-right-controls {
@@ -822,6 +836,46 @@ html, body {
 .todo-delete-btn:hover {
   background: #ffe4e6;
   color: #be185d;
+}
+
+/* Multi-Weekday Checkbox Selector Grid */
+.weekday-checkboxes-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.weekday-btn {
+  position: relative;
+  cursor: pointer;
+  text-align: center;
+}
+
+.weekday-btn input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.weekday-btn span {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 8px 0;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+}
+
+.weekday-btn input:checked + span {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 6px var(--primary-glow);
 }
 
 /* ==========================================================================

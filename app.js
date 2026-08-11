@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.8
- * Strict getDay() Mapping & Explicit Console Log Tracking
+ * Self-Esteem Boosting Mobile Web App v3.9
+ * Priorities Priority Priority: todo.days.includes(currentDay)
  */
 
 // ==========================================
@@ -210,7 +210,6 @@ function sanitizeTodo(todo) {
     };
   }
 
-  // Preserve existing days array completely without removing 'sat' or 'sun'
   let preservedDays = [];
   if (Array.isArray(todo.days) && todo.days.length > 0) {
     preservedDays = todo.days.map(d => String(d).trim().toLowerCase());
@@ -343,24 +342,24 @@ function isTodoActiveToday(todo) {
       return isActive;
     }
 
-    // 2. Repeat Schedule Check
+    // 2. HIGHEST PRIORITY CHECK: If todo.days array exists and has elements, check todo.days.includes(currentDay) FIRST!
     const currentDay = getTodayWeekdayKey(); // 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
-    const type = todo.repeatType || todo.repeat || 'daily';
+    
+    if (Array.isArray(todo.days) && todo.days.length > 0) {
+      const daysArr = todo.days.map(x => String(x).trim().toLowerCase());
+      const isActive = daysArr.includes(currentDay);
+      console.log("Today:", currentDay, "Todo days:", todo.days, "Match:", isActive, "Title:", todo.title);
+      return isActive;
+    }
 
+    // 3. Fallback checks for repeatType if todo.days is not available
+    const type = todo.repeatType || todo.repeat || 'daily';
     if (type === 'daily') return true;
 
     const d = new Date();
     const dayIndex = d.getDay(); // 0 = sun, 1 = mon, ..., 6 = sat
     if (type === 'weekdays') return dayIndex >= 1 && dayIndex <= 5;
     if (type === 'weekends') return dayIndex === 0 || dayIndex === 6;
-
-    // Multi-weekday check for 'weekly' or when todo.days exists
-    if (type === 'weekly' || Array.isArray(todo.days)) {
-      const daysArr = Array.isArray(todo.days) ? todo.days.map(x => String(x).trim().toLowerCase()) : [];
-      const isActive = daysArr.includes(currentDay);
-      console.log("Today:", currentDay, "Todo days:", todo.days, "Match:", isActive, "Title:", todo.title);
-      return isActive;
-    }
 
     return true;
   } catch (err) {
@@ -772,7 +771,10 @@ function openAddTodoModal() {
   
   setModalScheduleType('repeat');
 
-  document.querySelectorAll('#todo-days-selector input[type="checkbox"]').forEach(cb => cb.checked = false);
+  // Reset checkboxes and ensure hidden class is applied to #todo-days-selector
+  document.querySelectorAll('#todo-days-selector input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
   todoDaysSelector.classList.add('hidden');
 
   todoModal.classList.remove('hidden');
@@ -1026,7 +1028,7 @@ function createFloatingPlus(e) {
 
     document.body.appendChild(floatEl);
 
-    setTimeout(() => floatEl.remove(), 800);
+    setTimeout(() => floatEl.remove(), 900);
   } catch (e) {}
 }
 

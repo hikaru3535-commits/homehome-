@@ -455,7 +455,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px 0 20px;
+  margin: 10px 0 18px;
 }
 
 .ripple-container {
@@ -597,6 +597,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  margin-bottom: 16px;
 }
 
 .stat-box {
@@ -635,6 +636,171 @@ html, body {
   font-size: 0.95rem;
   font-weight: 800;
   color: var(--text-main);
+}
+
+/* ==========================================================================
+   HOME SCREEN HABIT TODO CARD
+   ========================================================================== */
+.home-todo-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 20px;
+}
+
+.todo-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.todo-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.todo-header-icon {
+  font-size: 1.1rem;
+}
+
+.todo-title-group h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.todo-count-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--bg-body);
+  color: var(--text-accent);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--primary-glow);
+}
+
+.add-todo-mini-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--primary-glow);
+  color: var(--text-accent);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.add-todo-mini-btn:hover {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.todo-hint-text {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.home-todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  transition: var(--transition-fast);
+}
+
+.todo-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.todo-item.completed {
+  background: #f8fafc;
+  opacity: 0.85;
+}
+
+.todo-item.completed .todo-item-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todo-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.todo-custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.todo-item.completed .todo-custom-checkbox {
+  background: var(--primary-gradient);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.todo-item-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  word-break: break-word;
+}
+
+.todo-repeat-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.todo-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+  margin-left: 8px;
+}
+
+.todo-delete-btn:hover {
+  color: #ef4444;
 }
 
 /* ==========================================================================
@@ -782,6 +948,22 @@ html, body {
   transform: translateY(0);
 }
 
+.secondary-btn {
+  background: #f1f5f9;
+  color: var(--text-main);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.secondary-btn:hover {
+  background: #e2e8f0;
+}
+
 /* Memo List Filters */
 .filter-tabs {
   display: flex;
@@ -899,7 +1081,7 @@ html, body {
 }
 
 /* ==========================================================================
-   TAB 3: RECORDS & SETTINGS VIEW (QUOTE PACK SELECTOR)
+   TAB 3: RECORDS & SETTINGS VIEW (QUOTE PACK SELECTOR & TODO MANAGER)
    ========================================================================== */
 .pack-selector-card {
   background: rgba(255, 255, 255, 0.88);
@@ -989,6 +1171,12 @@ html, body {
   font-size: 0.68rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+.todo-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Badges Grid */
@@ -1118,7 +1306,7 @@ html, body {
 }
 
 /* ==========================================================================
-   Modal Overlay & Theme Grid
+   Modal Overlay & Theme Grid & ToDo Form
    ========================================================================== */
 .modal-overlay {
   position: fixed;
@@ -1140,7 +1328,7 @@ html, body {
 .modal-card {
   background: #ffffff;
   border-radius: var(--radius-xl);
-  padding: 26px 22px;
+  padding: 24px 20px;
   width: 100%;
   max-width: 360px;
   text-align: center;
@@ -1154,8 +1342,8 @@ html, body {
 }
 
 .modal-badge-icon {
-  font-size: 3.2rem;
-  margin-bottom: 6px;
+  font-size: 3rem;
+  margin-bottom: 4px;
   animation: bounceEmoji 1s infinite alternate;
 }
 
@@ -1165,17 +1353,49 @@ html, body {
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 900;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.modal-count-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-accent);
+  margin-bottom: 14px;
+}
+
+/* ToDo Modal Form Inputs */
+.todo-form-group {
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--text-main);
   margin-bottom: 4px;
 }
 
-.modal-count-text {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  margin-bottom: 16px;
+.text-input, .select-input {
+  width: 100%;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--text-main);
+  outline: none;
+  background: #f8fafc;
+  transition: border-color 0.2s;
+}
+
+.text-input:focus, .select-input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 /* Theme Options Selector Grid */
@@ -1196,7 +1416,6 @@ html, body {
   padding: 10px 12px;
   cursor: pointer;
   transition: var(--transition-fast);
-
 }
 
 .theme-option-btn:hover {
@@ -1246,6 +1465,6 @@ html, body {
 .modal-btn {
   width: 100%;
   justify-content: center;
-  padding: 12px;
-  font-size: 0.92rem;
+  padding: 10px;
+  font-size: 0.9rem;
 }

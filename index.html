@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ほめタマ | 自己肯定感を高めるワンタップカウンター</title>
-  <meta name="description" content="タップするだけで心が温まる、自己肯定感を育むワンタップカウンター＆メモアプリ">
+  <meta name="description" content="タップするだけで心が温まる、自己肯定感を育むワンタップカウンター＆習慣化ToDoアプリ">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
         <div class="brand-icon">✨</div>
         <div class="brand-text">
           <h1>ほめタマ</h1>
-          <span class="sub-title">Self-Love Counter</span>
+          <span class="sub-title">Self-Love Counter & Habit</span>
         </div>
       </div>
       <div class="header-actions">
@@ -73,7 +73,7 @@
     <!-- Main View Content Container -->
     <main class="view-content">
 
-      <!-- TAB 1: COUNTER VIEW -->
+      <!-- TAB 1: COUNTER & HOME VIEW -->
       <section id="tab-counter" class="tab-pane active">
         
         <!-- Level Progress Pill -->
@@ -136,6 +136,28 @@
           </div>
         </div>
 
+        <!-- HOME SCREEN HABIT TODO SECTION -->
+        <div class="home-todo-card">
+          <div class="todo-card-header">
+            <div class="todo-title-group">
+              <span class="todo-header-icon">✅</span>
+              <h3>今日の習慣ToDo</h3>
+              <span class="todo-count-badge" id="home-todo-badge">0/0 完了</span>
+            </div>
+            <button id="add-todo-modal-btn" class="add-todo-mini-btn" title="新しい習慣を追加">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>追加</span>
+            </button>
+          </div>
+          <p class="todo-hint-text">チェックを入れるとメインカウントが連動して **+1** されます！</p>
+          <div id="home-todo-list" class="home-todo-list">
+            <!-- Dynamically rendered items -->
+          </div>
+        </div>
+
       </section>
 
       <!-- TAB 2: MEMO VIEW -->
@@ -192,10 +214,10 @@
         </div>
       </section>
 
-      <!-- TAB 3: RECORDS / BADGES & SETTINGS VIEW -->
+      <!-- TAB 3: RECORDS & SETTINGS VIEW -->
       <section id="tab-records" class="tab-pane">
         
-        <!-- Quote Pack Selector Section (Future-Proof Structure) -->
+        <!-- Quote Pack Selector Section -->
         <div class="pack-selector-card">
           <div class="pack-header">
             <h3>💬 メッセージテーマ（名言セット）</h3>
@@ -205,6 +227,21 @@
           <div class="pack-buttons-grid" id="quote-pack-selector">
             <!-- Rendered dynamically -->
           </div>
+        </div>
+
+        <!-- Habit ToDo Manager Card -->
+        <div class="pack-selector-card" style="margin-top: 16px;">
+          <div class="pack-header">
+            <h3>⚙️ 習慣ToDoの設定・管理</h3>
+            <span class="pack-badge">繰り返し設定</span>
+          </div>
+          <p class="pack-desc">毎日または指定した曜日に取り組む習慣を作成・編集できます</p>
+          <div id="todo-manager-list" class="todo-manager-list">
+            <!-- Rendered dynamically -->
+          </div>
+          <button id="manager-add-todo-btn" class="primary-btn" style="margin-top: 10px; width: 100%; justify-content: center;">
+            <span>＋ 新しい習慣を作成</span>
+          </button>
         </div>
 
         <div class="records-header" style="margin-top: 20px;">
@@ -259,6 +296,41 @@
       </button>
     </nav>
 
+  </div>
+
+  <!-- Add Habit ToDo Modal -->
+  <div id="todo-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-badge-icon">✨</div>
+      <h3 class="modal-title">習慣ToDoを作成</h3>
+      <p class="modal-count-text">毎日・定期的に続けたいタスクを登録しよう</p>
+      
+      <div class="todo-form-group">
+        <label for="todo-title-input" class="form-label">習慣のタイトル</label>
+        <input type="text" id="todo-title-input" class="text-input" placeholder="例：朝のお水を1杯飲む 💧" maxlength="40">
+      </div>
+
+      <div class="todo-form-group" style="margin-top: 12px;">
+        <label for="todo-repeat-select" class="form-label">繰り返し設定</label>
+        <select id="todo-repeat-select" class="select-input">
+          <option value="daily">毎日（月〜日）</option>
+          <option value="weekdays">平日（月〜金）</option>
+          <option value="weekends">土日・休日</option>
+          <option value="mon">毎週 月曜日</option>
+          <option value="tue">毎週 火曜日</option>
+          <option value="wed">毎週 水曜日</option>
+          <option value="thu">毎週 木曜日</option>
+          <option value="fri">毎週 金曜日</option>
+          <option value="sat">毎週 土曜日</option>
+          <option value="sun">毎週 日曜日</option>
+        </select>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button id="save-todo-btn" class="primary-btn modal-btn">保存する</button>
+        <button id="cancel-todo-btn" class="secondary-btn modal-btn" style="margin-top: 8px;">キャンセル</button>
+      </div>
+    </div>
   </div>
 
   <!-- Color Theme Selector Modal -->

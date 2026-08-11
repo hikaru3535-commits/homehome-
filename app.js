@@ -1,6 +1,6 @@
 /**
- * ほめタマ (SelfBoost Counter & Memo)
- * Self-Esteem Boosting Mobile Web App v2.0
+ * ほめタマ (SelfBoost Counter & Habit ToDo)
+ * Self-Esteem Boosting Mobile Web App v3.0
  */
 
 // ==========================================
@@ -49,8 +49,8 @@ const QUOTE_PACKS = {
       "あなたの選択はいつも間違いじゃないよ信頼しよう✨",
       "心に太陽を持って、今日も笑顔でいこう☀️",
       "自分の機嫌は自分で取れるあなた、天才！🌟",
-      "今日も生き抜いた自分を抱きしめてあげよう抱擁🤗",
-      "あなたの優しさに救われている人が必ずいるよ温かみ💕",
+      "今日も生き抜いた自分を抱きしめてあげよう🤗",
+      "あなたの優しさに救われている人が必ずいるよ💕",
       "どんな小歩も前進！一歩一歩を楽しんで♪",
       "今日も今日とて、あなたは輝いています✨",
       "自分を信じる強さが、あなたには備わっています！🛡️",
@@ -60,7 +60,7 @@ const QUOTE_PACKS = {
       "今日も自分の一番のファンでいよう📣",
       "小さな幸せを見つける名人だね！🍀",
       "あなたは大切な宝物。大切に扱ってね💎",
-      "今日もお疲れ様！ゆっくり休んでね夜空🌙",
+      "今日もお疲れ様！ゆっくり休んでね🌙",
       "明日もあなたの輝く一日になりますように✨",
       "ずっとずっと、あなたのことを誇りに思っています！🏆"
     ]
@@ -80,7 +80,7 @@ const QUOTE_PACKS = {
       "「君の選択は間違っていない！」🎯",
       "「諦めない心こそが、最大の武器だ！」🛡️",
       "「奇跡は諦めない奴の頭上にしか降りてこない！」🌈",
-      "「笑っていれば、きっと良い風が吹く！」風🍃",
+      "「笑っていれば、きっと良い風が吹く！」🍃",
       "「君は君のままで素晴らしい！」✨",
       "「限界を決めるのは、いつだって自分自身だ！」💥",
       "「仲間と自分を信じて前へ進め！」🤝",
@@ -113,7 +113,6 @@ const QUOTE_PACKS = {
   }
 };
 
-// Quote Manager Helper Object
 const QuoteManager = {
   getActivePack() {
     const packId = state.activeQuotePack || 'standard';
@@ -134,7 +133,7 @@ const QuoteManager = {
 };
 
 // ==========================================
-// 2. MILESTONES DATA
+// 2. MILESTONES DATA & PROCEDURAL LEVELS
 // ==========================================
 const PREDEFINED_MILESTONES = [
   { count: 5, badge: "🌱 芽生え", title: "はじめの一歩！", quote: "「自分を褒める旅がスタートしました！どんな小さなことでもあなたは最高です！」" },
@@ -146,9 +145,7 @@ const PREDEFINED_MILESTONES = [
   { count: 500, badge: "🌟 究極の神ほめ", title: "伝説のセルフラブマスター！", quote: "「500回到達！あなたは自分自身の最高の味方であり、ヒーローです！」" }
 ];
 
-// Unlimited Level Generator Helper
 function getLevelInfo(totalCount) {
-  // Predefined milestones first
   let currentLevel = PREDEFINED_MILESTONES[0];
   let nextLevel = PREDEFINED_MILESTONES[1];
 
@@ -161,7 +158,6 @@ function getLevelInfo(totalCount) {
     }
   }
 
-  // Beyond 500 count: Unlimited procedural levels!
   if (totalCount >= 500) {
     const extraLevelNum = Math.floor((totalCount - 500) / 100) + 1;
     const currentReq = 500 + (extraLevelNum - 1) * 100;
@@ -186,7 +182,7 @@ function getLevelInfo(totalCount) {
 }
 
 // ==========================================
-// 3. APP STATE MANAGEMENT
+// 3. APP STATE MANAGEMENT & DATA MIGRATION
 // ==========================================
 let state = {
   todayCount: 0,
@@ -194,24 +190,55 @@ let state = {
   lastActiveDate: new Date().toDateString(),
   streakCount: 1,
   soundEnabled: true,
-  theme: 'red', // 'red' | 'blue' | 'yellow' | 'green'
-  displayMode: 'today', // 'today' | 'total'
+  theme: 'red',
+  displayMode: 'today',
   activeQuotePack: 'standard',
   memos: [],
-  unlockedMilestones: []
+  unlockedMilestones: [],
+  todos: [
+    { id: 1, title: '💧 水を1杯飲む', repeat: 'daily', completedDates: [] },
+    { id: 2, title: '🧘‍♂️ 1分間の深呼吸', repeat: 'daily', completedDates: [] },
+    { id: 3, title: '✨ できたことを1つメモする', repeat: 'daily', completedDates: [] }
+  ]
 };
 
-const STORAGE_KEY = 'hometama_app_state_v2';
+// Storage Keys (Legacy Keys for Seamless Backward Compatibility & No Reset on App Updates!)
+const LEGACY_STORAGE_KEYS = ['hometama_app_state_v1', 'hometama_app_state_v2'];
+const CURRENT_STORAGE_KEY = 'hometama_app_state_v3';
 
 function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      state = { ...state, ...parsed };
-    } catch (e) {
-      console.error("State parse error:", e);
+  let mergedData = {};
+
+  // 1. First read legacy keys if present
+  LEGACY_STORAGE_KEYS.forEach(key => {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        mergedData = { ...mergedData, ...parsed };
+      } catch (e) {}
     }
+  });
+
+  // 2. Read current key
+  const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY);
+  if (currentRaw) {
+    try {
+      const parsed = JSON.parse(currentRaw);
+      mergedData = { ...mergedData, ...parsed };
+    } catch (e) {}
+  }
+
+  // 3. Merge safely into state
+  state = { ...state, ...mergedData };
+
+  // Ensure default todos exist if empty
+  if (!state.todos || state.todos.length === 0) {
+    state.todos = [
+      { id: 1, title: '💧 水を1杯飲む', repeat: 'daily', completedDates: [] },
+      { id: 2, title: '🧘‍♂️ 1分間の深呼吸', repeat: 'daily', completedDates: [] },
+      { id: 3, title: '✨ できたことを1つメモする', repeat: 'daily', completedDates: [] }
+    ];
   }
 
   // Check date for Daily Counter reset & Streak update
@@ -228,16 +255,128 @@ function loadState() {
     }
     state.todayCount = 0;
     state.lastActiveDate = todayStr;
-    saveState();
   }
+
+  saveState();
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(CURRENT_STORAGE_KEY, JSON.stringify(state));
 }
 
 // ==========================================
-// 4. WEB AUDIO SYNTHESIZER (SOUND EFFECTS)
+// 4. HABIT TODO REPEAT LOGIC
+// ==========================================
+function getTodayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isTodoActiveToday(todo) {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
+  const rep = todo.repeat;
+
+  if (rep === 'daily') return true;
+  if (rep === 'weekdays' && day >= 1 && day <= 5) return true;
+  if (rep === 'weekends' && (day === 0 || day === 6)) return true;
+  
+  const dayMap = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 };
+  if (dayMap[rep] !== undefined && dayMap[rep] === day) return true;
+
+  return false;
+}
+
+function getRepeatLabel(repeat) {
+  const map = {
+    daily: '毎日',
+    weekdays: '平日',
+    weekends: '休日',
+    mon: '毎週月曜',
+    tue: '毎週火曜',
+    wed: '毎週水曜',
+    thu: '毎週木曜',
+    fri: '毎週金曜',
+    sat: '毎週土曜',
+    sun: '毎週日曜'
+  };
+  return map[repeat] || '設定なし';
+}
+
+function toggleTodoCompletion(todoId) {
+  const todayStr = getTodayDateString();
+  const todo = state.todos.find(t => t.id === todoId);
+  if (!todo) return;
+
+  const isCompleted = todo.completedDates.includes(todayStr);
+
+  if (!isCompleted) {
+    // Complete ToDo -> Increments Main Counter by +1!
+    todo.completedDates.push(todayStr);
+    state.todayCount += 1;
+    state.totalCount += 1;
+
+    playCelebrationSound();
+    triggerConfetti();
+
+    // Floating text feedback
+    createFloatingText(`+1 ${todo.title} 完了! 🎉`);
+    updateComplimentMessage();
+    checkMilestoneUnlocked();
+  } else {
+    // Uncheck ToDo
+    todo.completedDates = todo.completedDates.filter(d => d !== todayStr);
+    if (state.soundEnabled) playTapSound();
+  }
+
+  saveState();
+  renderCounterStats();
+  renderLevelProgress();
+  renderHomeTodoList();
+  renderTodoManagerList();
+}
+
+function createFloatingText(text) {
+  const floatEl = document.createElement('span');
+  floatEl.className = 'floating-plus';
+  floatEl.innerText = text;
+
+  const tapBtn = document.getElementById('tap-button');
+  const rect = tapBtn.getBoundingClientRect();
+  const x = rect.left + rect.width / 2 - 50;
+  const y = rect.top + rect.height / 2 - 20;
+
+  floatEl.style.left = `${x}px`;
+  floatEl.style.top = `${y}px`;
+  floatEl.style.fontSize = '1.1rem';
+
+  document.body.appendChild(floatEl);
+
+  setTimeout(() => floatEl.remove(), 900);
+}
+
+function addHabitTodo(title, repeat) {
+  const newTodo = {
+    id: Date.now(),
+    title: title.trim(),
+    repeat: repeat || 'daily',
+    completedDates: []
+  };
+  state.todos.push(newTodo);
+  saveState();
+  renderHomeTodoList();
+  renderTodoManagerList();
+}
+
+function deleteHabitTodo(id) {
+  state.todos = state.todos.filter(t => t.id !== id);
+  saveState();
+  renderHomeTodoList();
+  renderTodoManagerList();
+}
+
+// ==========================================
+// 5. WEB AUDIO SYNTHESIZER
 // ==========================================
 let audioCtx = null;
 
@@ -306,7 +445,7 @@ function playCelebrationSound() {
 }
 
 // ==========================================
-// 5. HTML5 CANVAS CONFETTI EFFECT
+// 6. HTML5 CANVAS CONFETTI EFFECT
 // ==========================================
 const canvas = document.getElementById('confetti-canvas');
 const ctx = canvas.getContext('2d');
@@ -386,7 +525,7 @@ function animateConfetti() {
 }
 
 // ==========================================
-// 6. UI INITIALIZATION & EVENT LISTENERS
+// 7. UI INITIALIZATION & EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
@@ -423,6 +562,15 @@ const themeModalBtn = document.getElementById('theme-modal-btn');
 const themeModal = document.getElementById('theme-modal');
 const themeCloseBtn = document.getElementById('theme-close-btn');
 
+// Habit ToDo Modal Elements
+const todoModal = document.getElementById('todo-modal');
+const addTodoModalBtn = document.getElementById('add-todo-modal-btn');
+const managerAddTodoBtn = document.getElementById('manager-add-todo-btn');
+const saveTodoBtn = document.getElementById('save-todo-btn');
+const cancelTodoBtn = document.getElementById('cancel-todo-btn');
+const todoTitleInput = document.getElementById('todo-title-input');
+const todoRepeatSelect = document.getElementById('todo-repeat-select');
+
 // Tab Navigation
 const navItems = document.querySelectorAll('.nav-item');
 const tabPanes = document.querySelectorAll('.tab-pane');
@@ -451,7 +599,6 @@ function applyTheme(themeName) {
   state.theme = themeName;
   document.body.setAttribute('data-theme', themeName);
 
-  // Update theme modal active button
   document.querySelectorAll('.theme-option-btn').forEach(btn => {
     if (btn.getAttribute('data-theme') === themeName) {
       btn.classList.add('active');
@@ -482,6 +629,13 @@ function setDisplayMode(mode) {
   saveState();
 }
 
+function openAddTodoModal() {
+  todoTitleInput.value = '';
+  todoRepeatSelect.value = 'daily';
+  todoModal.classList.remove('hidden');
+  todoTitleInput.focus();
+}
+
 function initUI() {
   // 1. One-tap Counter Listener
   tapButton.addEventListener('click', handleTap);
@@ -506,7 +660,22 @@ function initUI() {
     });
   });
 
-  // 4. Sound Toggle Listener
+  // 4. Habit ToDo Modal Open & Close
+  addTodoModalBtn.addEventListener('click', openAddTodoModal);
+  managerAddTodoBtn.addEventListener('click', openAddTodoModal);
+  cancelTodoBtn.addEventListener('click', () => todoModal.classList.add('hidden'));
+
+  saveTodoBtn.addEventListener('click', () => {
+    const title = todoTitleInput.value;
+    if (!title.trim()) {
+      todoTitleInput.focus();
+      return;
+    }
+    addHabitTodo(title, todoRepeatSelect.value);
+    todoModal.classList.add('hidden');
+  });
+
+  // 5. Sound Toggle Listener
   updateSoundUI();
   soundToggleBtn.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
@@ -514,7 +683,7 @@ function initUI() {
     saveState();
   });
 
-  // 5. Bottom Tab Switching Listener
+  // 6. Bottom Tab Switching Listener
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetTab = item.getAttribute('data-tab');
@@ -522,7 +691,7 @@ function initUI() {
     });
   });
 
-  // 6. Memo Category Pills
+  // 7. Memo Category Pills
   categoryPills.forEach(pill => {
     pill.addEventListener('click', () => {
       categoryPills.forEach(p => p.classList.remove('active'));
@@ -531,7 +700,7 @@ function initUI() {
     });
   });
 
-  // 7. Prompt Chips
+  // 8. Prompt Chips
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.getAttribute('data-prompt');
@@ -541,13 +710,13 @@ function initUI() {
     });
   });
 
-  // 8. Memo Input Char Counter
+  // 9. Memo Input Char Counter
   memoInput.addEventListener('input', updateCharCount);
 
-  // 9. Add Memo Button
+  // 10. Add Memo Button
   addMemoBtn.addEventListener('click', handleAddMemo);
 
-  // 10. Memo Filter Tabs
+  // 11. Memo Filter Tabs
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
@@ -557,12 +726,12 @@ function initUI() {
     });
   });
 
-  // 11. Close Modal Listener
+  // 12. Close Modal Listener
   modalCloseBtn.addEventListener('click', () => {
     milestoneModal.classList.add('hidden');
   });
 
-  // 12. Quick Stats Button Modal
+  // 13. Quick Stats Button Modal
   document.getElementById('stats-modal-btn').addEventListener('click', () => {
     switchTab('tab-records');
   });
@@ -571,31 +740,22 @@ function initUI() {
 }
 
 // ==========================================
-// 7. CORE COUNTER LOGIC
+// 8. CORE COUNTER LOGIC
 // ==========================================
 function handleTap(e) {
   state.todayCount += 1;
   state.totalCount += 1;
 
-  // Sound & Haptic
   playTapSound();
   if (navigator.vibrate) {
     navigator.vibrate(15);
   }
 
-  // Floating +1 animation
   createFloatingPlus(e);
-
-  // Button Ripple Effect
   createButtonRipple(e);
-
-  // Random compliment message update
   updateComplimentMessage();
-
-  // Check Milestone
   checkMilestoneUnlocked();
 
-  // Save & Render
   saveState();
   renderCounterStats();
   renderLevelProgress();
@@ -660,7 +820,6 @@ function checkMilestoneUnlocked() {
     }
   });
 
-  // Beyond 500 count check
   if (state.totalCount > 500 && state.totalCount % 100 === 0) {
     if (!state.unlockedMilestones.includes(state.totalCount)) {
       state.unlockedMilestones.push(state.totalCount);
@@ -681,7 +840,7 @@ function showMilestoneModal(ms) {
 }
 
 // ==========================================
-// 8. MEMO FEATURE LOGIC
+// 9. MEMO FEATURE LOGIC
 // ==========================================
 function updateCharCount() {
   const len = memoInput.value.length;
@@ -783,8 +942,86 @@ function escapeHTML(str) {
 }
 
 // ==========================================
-// 9. TAB NAVIGATION & RENDERERS
+// 10. RENDERERS & HOME TODO LIST
 // ==========================================
+function renderHomeTodoList() {
+  const container = document.getElementById('home-todo-list');
+  const badge = document.getElementById('home-todo-badge');
+  container.innerHTML = '';
+
+  const activeTodos = state.todos.filter(isTodoActiveToday);
+  const todayStr = getTodayDateString();
+  const completedCount = activeTodos.filter(t => t.completedDates.includes(todayStr)).length;
+
+  badge.innerText = `${completedCount}/${activeTodos.length} 完了`;
+
+  if (activeTodos.length === 0) {
+    container.innerHTML = `
+      <div class="empty-memo-state" style="padding: 12px 0;">
+        <p style="font-size: 0.78rem;">今日予定されている習慣ToDoはありません✨</p>
+      </div>
+    `;
+    return;
+  }
+
+  activeTodos.forEach(todo => {
+    const isCompleted = todo.completedDates.includes(todayStr);
+    const item = document.createElement('div');
+    item.className = `todo-item ${isCompleted ? 'completed' : ''}`;
+
+    item.innerHTML = `
+      <label class="todo-checkbox-label">
+        <div class="todo-custom-checkbox">${isCompleted ? '✓' : ''}</div>
+        <span class="todo-item-title">${escapeHTML(todo.title)}</span>
+      </label>
+      <span class="todo-repeat-tag">${getRepeatLabel(todo.repeat)}</span>
+    `;
+
+    item.querySelector('.todo-checkbox-label').addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleTodoCompletion(todo.id);
+    });
+
+    container.appendChild(item);
+  });
+}
+
+function renderTodoManagerList() {
+  const container = document.getElementById('todo-manager-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (state.todos.length === 0) {
+    container.innerHTML = `
+      <div class="empty-memo-state" style="padding: 12px 0;">
+        <p style="font-size: 0.78rem;">登録されている習慣はありません</p>
+      </div>
+    `;
+    return;
+  }
+
+  state.todos.forEach(todo => {
+    const item = document.createElement('div');
+    item.className = 'todo-item';
+
+    item.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="todo-item-title">${escapeHTML(todo.title)}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="todo-repeat-tag">${getRepeatLabel(todo.repeat)}</span>
+        <button class="todo-delete-btn" data-id="${todo.id}">削除</button>
+      </div>
+    `;
+
+    item.querySelector('.todo-delete-btn').addEventListener('click', () => {
+      deleteHabitTodo(todo.id);
+    });
+
+    container.appendChild(item);
+  });
+}
+
 function switchTab(tabId) {
   navItems.forEach(item => {
     if (item.getAttribute('data-tab') === tabId) {
@@ -802,6 +1039,7 @@ function switchTab(tabId) {
     }
   });
 
+  if (tabId === 'tab-counter') renderHomeTodoList();
   if (tabId === 'tab-memo') renderMemoList();
   if (tabId === 'tab-records') renderRecords();
 }
@@ -876,7 +1114,10 @@ function renderRecords() {
     packContainer.appendChild(btn);
   });
 
-  // 2. Render Badges Grid
+  // 2. Render Todo Manager
+  renderTodoManagerList();
+
+  // 3. Render Badges Grid
   const badgesGrid = document.getElementById('badges-grid');
   badgesGrid.innerHTML = '';
 
@@ -896,7 +1137,7 @@ function renderRecords() {
     badgesGrid.appendChild(item);
   });
 
-  // 3. Render Unlocked Quotes
+  // 4. Render Unlocked Quotes
   const quotesList = document.getElementById('unlocked-quotes-list');
   quotesList.innerHTML = '';
 
@@ -925,6 +1166,7 @@ function renderRecords() {
 function renderAll() {
   renderCounterStats();
   renderLevelProgress();
+  renderHomeTodoList();
   renderMemoList();
   renderRecords();
 }

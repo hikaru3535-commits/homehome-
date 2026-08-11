@@ -1,6 +1,6 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.0
+ * Self-Esteem Boosting Mobile Web App v3.1
  */
 
 // ==========================================
@@ -202,14 +202,12 @@ let state = {
   ]
 };
 
-// Storage Keys (Legacy Keys for Seamless Backward Compatibility & No Reset on App Updates!)
 const LEGACY_STORAGE_KEYS = ['hometama_app_state_v1', 'hometama_app_state_v2'];
 const CURRENT_STORAGE_KEY = 'hometama_app_state_v3';
 
 function loadState() {
   let mergedData = {};
 
-  // 1. First read legacy keys if present
   LEGACY_STORAGE_KEYS.forEach(key => {
     const raw = localStorage.getItem(key);
     if (raw) {
@@ -220,7 +218,6 @@ function loadState() {
     }
   });
 
-  // 2. Read current key
   const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY);
   if (currentRaw) {
     try {
@@ -229,10 +226,12 @@ function loadState() {
     } catch (e) {}
   }
 
-  // 3. Merge safely into state
   state = { ...state, ...mergedData };
 
-  // Ensure default todos exist if empty
+  // Safety check: count numbers must never be negative
+  state.todayCount = Math.max(0, state.todayCount || 0);
+  state.totalCount = Math.max(0, state.totalCount || 0);
+
   if (!state.todos || state.todos.length === 0) {
     state.todos = [
       { id: 1, title: '💧 水を1杯飲む', repeat: 'daily', completedDates: [] },
@@ -241,7 +240,6 @@ function loadState() {
     ];
   }
 
-  // Check date for Daily Counter reset & Streak update
   const todayStr = new Date().toDateString();
   if (state.lastActiveDate !== todayStr) {
     const lastDate = new Date(state.lastActiveDate);
@@ -265,7 +263,7 @@ function saveState() {
 }
 
 // ==========================================
-// 4. HABIT TODO REPEAT LOGIC
+// 4. HABIT TODO REPEAT & COUNTER LINK LOGIC
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -274,7 +272,7 @@ function getTodayDateString() {
 
 function isTodoActiveToday(todo) {
   const now = new Date();
-  const day = now.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
+  const day = now.getDay();
   const rep = todo.repeat;
 
   if (rep === 'daily') return true;
@@ -311,7 +309,7 @@ function toggleTodoCompletion(todoId) {
   const isCompleted = todo.completedDates.includes(todayStr);
 
   if (!isCompleted) {
-    // Complete ToDo -> Increments Main Counter by +1!
+    // Check ToDo -> Increment count by +1
     todo.completedDates.push(todayStr);
     state.todayCount += 1;
     state.totalCount += 1;
@@ -319,14 +317,18 @@ function toggleTodoCompletion(todoId) {
     playCelebrationSound();
     triggerConfetti();
 
-    // Floating text feedback
     createFloatingText(`+1 ${todo.title} 完了! 🎉`);
     updateComplimentMessage();
     checkMilestoneUnlocked();
   } else {
-    // Uncheck ToDo
+    // Uncheck ToDo -> Decrement count by -1 (Non-negative safety check)
     todo.completedDates = todo.completedDates.filter(d => d !== todayStr);
+    
+    state.todayCount = Math.max(0, state.todayCount - 1);
+    state.totalCount = Math.max(0, state.totalCount - 1);
+
     if (state.soundEnabled) playTapSound();
+    createFloatingText(`-1 取消`);
   }
 
   saveState();
@@ -970,16 +972,26 @@ function renderHomeTodoList() {
     item.className = `todo-item ${isCompleted ? 'completed' : ''}`;
 
     item.innerHTML = `
-      <label class="todo-checkbox-label">
+      <div class="todo-left-content" title="完了チェックの切替">
         <div class="todo-custom-checkbox">${isCompleted ? '✓' : ''}</div>
         <span class="todo-item-title">${escapeHTML(todo.title)}</span>
-      </label>
-      <span class="todo-repeat-tag">${getRepeatLabel(todo.repeat)}</span>
+      </div>
+      <div class="todo-right-controls">
+        <span class="todo-repeat-tag">${getRepeatLabel(todo.repeat)}</span>
+        <button class="todo-delete-btn home-todo-del-btn" data-id="${todo.id}" title="削除">🗑️ 削除</button>
+      </div>
     `;
 
-    item.querySelector('.todo-checkbox-label').addEventListener('click', (e) => {
-      e.preventDefault();
+    // Toggle completion on check click
+    item.querySelector('.todo-left-content').addEventListener('click', (e) => {
+      e.stopPropagation();
       toggleTodoCompletion(todo.id);
+    });
+
+    // Delete item directly from Home Screen ToDo list
+    item.querySelector('.home-todo-del-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteHabitTodo(todo.id);
     });
 
     container.appendChild(item);
@@ -1010,11 +1022,11 @@ function renderTodoManagerList() {
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <span class="todo-repeat-tag">${getRepeatLabel(todo.repeat)}</span>
-        <button class="todo-delete-btn" data-id="${todo.id}">削除</button>
+        <button class="todo-delete-btn manager-todo-del-btn" data-id="${todo.id}">🗑️ 削除</button>
       </div>
     `;
 
-    item.querySelector('.todo-delete-btn').addEventListener('click', () => {
+    item.querySelector('.manager-todo-del-btn').addEventListener('click', () => {
       deleteHabitTodo(todo.id);
     });
 

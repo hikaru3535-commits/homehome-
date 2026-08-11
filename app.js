@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.9
- * Priorities Priority Priority: todo.days.includes(currentDay)
+ * Self-Esteem Boosting Mobile Web App v4.0
+ * Fully Coordinated HTML & JS Weekday Integration
  */
 
 // ==========================================
@@ -195,7 +195,7 @@ function getTodayWeekdayKey() {
   return WEEKDAY_KEYS[dayIndex];
 }
 
-// Helper to sanitize any todo item while preserving existing days array intact
+// Helper to sanitize any todo item while preserving received days array intact (especially 'sat','sun')
 function sanitizeTodo(todo) {
   if (!todo || typeof todo !== 'object') {
     return {
@@ -812,6 +812,7 @@ function openEditTodoModal(todo) {
       cb.checked = targetDays.includes(val);
     });
 
+    // Explicitly unhide #todo-days-selector if scheduleType is repeat AND repeatType is weekly
     if (cleanTodo.scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
       todoDaysSelector.classList.remove('hidden');
     } else {
@@ -929,6 +930,7 @@ function initUI() {
     });
   });
 
+  // Smooth change event handler for #todo-repeat-select
   todoRepeatSelect.addEventListener('change', () => {
     if (todoRepeatSelect.value === 'weekly') {
       todoDaysSelector.classList.remove('hidden');
@@ -1028,7 +1030,7 @@ function createFloatingPlus(e) {
 
     document.body.appendChild(floatEl);
 
-    setTimeout(() => floatEl.remove(), 900);
+    setTimeout(() => floatEl.remove(), 800);
   } catch (e) {}
 }
 

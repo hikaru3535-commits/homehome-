@@ -332,17 +332,17 @@
           <option value="weekly">毎週（複数曜日を指定）</option>
         </select>
 
-        <!-- Multi-Weekday Selector Checkboxes (Shown when repeat === 'weekly') -->
+        <!-- Multi-Weekday Selector Checkboxes with explicit IDs, Names, and Values matching 'mon','tue','wed','thu','fri','sat','sun' -->
         <div id="todo-days-selector" class="todo-days-selector hidden" style="margin-top: 8px;">
           <label class="form-label">取り組む曜日（複数選択可能）</label>
           <div class="weekday-checkboxes-grid">
-            <label class="weekday-btn"><input type="checkbox" value="mon"><span>月</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="tue"><span>火</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="wed"><span>水</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="thu"><span>木</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="fri"><span>金</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="sat"><span>土</span></label>
-            <label class="weekday-btn"><input type="checkbox" value="sun"><span>日</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-mon" value="mon"><span>月</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-tue" value="tue"><span>火</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-wed" value="wed"><span>水</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-thu" value="thu"><span>木</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-fri" value="fri"><span>金</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-sat" value="sat"><span>土</span></label>
+            <label class="weekday-btn"><input type="checkbox" name="todo-day" id="day-sun" value="sun"><span>日</span></label>
           </div>
         </div>
       </div>

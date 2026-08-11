@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v3.6
- * Complete Fix for Repeat Preset vs Weekly Multi-Day Conflict & Safe Error Handling
+ * Self-Esteem Boosting Mobile Web App v3.7
+ * Unified Weekday Keys ('mon','tue','wed','thu','fri','sat','sun')
  */
 
 // ==========================================
@@ -183,20 +183,11 @@ function getLevelInfo(totalCount) {
 }
 
 // ==========================================
-// 3. ROBUST DAY MAPPING DICTIONARY
+// 3. UNIFIED WEEKDAY IDENTIFIERS ('mon'..'sun')
 // ==========================================
-const DAY_MAP = {
-  0: 0, '0': 0, 'sun': 0, 'Sunday': 0, '日': 0,
-  1: 1, '1': 1, 'mon': 1, 'Monday': 1, '月': 1,
-  2: 2, '2': 2, 'tue': 2, 'Tuesday': 2, '火': 2,
-  3: 3, '3': 3, 'wed': 3, 'Wednesday': 3, '水': 3,
-  4: 4, '4': 4, 'thu': 4, 'Thursday': 4, '木': 4,
-  5: 5, '5': 5, 'fri': 5, 'Friday': 5, '金': 5,
-  6: 6, '6': 6, 'sat': 6, 'Saturday': 6, '土': 6
-};
-
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-const DAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
+// JavaScript Date.getDay(): 0=Sunday ('sun'), 1=Monday ('mon'), ..., 6=Saturday ('sat')
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const WEEKDAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
 // Helper to sanitize any todo item into a valid data structure
 function sanitizeTodo(todo) {
@@ -206,7 +197,7 @@ function sanitizeTodo(todo) {
       title: '習慣タスク',
       scheduleType: 'repeat',
       repeatType: 'daily',
-      days: ['sun','mon','tue','wed','thu','fri','sat'],
+      days: ['mon','tue','wed','thu','fri','sat','sun'],
       specificDate: '',
       targetTime: '',
       completedDates: []
@@ -218,7 +209,7 @@ function sanitizeTodo(todo) {
     title: todo.title || '無題のタスク',
     scheduleType: todo.scheduleType === 'specific_date' ? 'specific_date' : 'repeat',
     repeatType: todo.repeatType || todo.repeat || 'daily',
-    days: Array.isArray(todo.days) ? todo.days : ['sun','mon','tue','wed','thu','fri','sat'],
+    days: Array.isArray(todo.days) ? todo.days.map(d => String(d).trim().toLowerCase()) : ['mon','tue','wed','thu','fri','sat','sun'],
     specificDate: todo.specificDate || '',
     targetTime: todo.targetTime || '',
     completedDates: Array.isArray(todo.completedDates) ? todo.completedDates : []
@@ -335,8 +326,8 @@ function isTodoActiveToday(todo) {
 
     // 2. Repeat Schedule Check
     const now = new Date();
-    const todayIndex = now.getDay(); // 0 = Sunday, 1 = Mon, ..., 6 = Saturday
-    const todayKey = DAY_KEYS[todayIndex]; // 'sun', 'mon', ..., 'sat'
+    const todayIndex = now.getDay(); // 0 = Sunday ('sun'), 1 = Mon ('mon'), ..., 6 = Saturday ('sat')
+    const todayKey = WEEKDAY_KEYS[todayIndex]; // Exact key: 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
 
     const type = todo.repeatType || todo.repeat || 'daily';
 
@@ -344,23 +335,13 @@ function isTodoActiveToday(todo) {
     if (type === 'weekdays') return todayIndex >= 1 && todayIndex <= 5;
     if (type === 'weekends') return todayIndex === 0 || todayIndex === 6;
 
-    // Multi-weekday check for 'weekly'
-    if (type === 'weekly') {
+    // Multi-weekday check for 'weekly' or custom day lists
+    if (type === 'weekly' || Array.isArray(todo.days)) {
       if (Array.isArray(todo.days) && todo.days.length > 0) {
-        return todo.days.some(d => {
-          const norm = DAY_MAP[d];
-          return norm === todayIndex || d === todayKey;
-        });
+        const normalizedDays = todo.days.map(d => String(d).trim().toLowerCase());
+        return normalizedDays.includes(todayKey);
       }
       return true;
-    }
-
-    // Single day string or fallback
-    if (Array.isArray(todo.days) && todo.days.length > 0) {
-      return todo.days.some(d => {
-        const norm = DAY_MAP[d];
-        return norm === todayIndex || d === todayKey;
-      });
     }
 
     return true;
@@ -387,17 +368,15 @@ function getScheduleLabel(todo) {
       if (type === 'daily') label = '毎日';
       else if (type === 'weekdays') label = '平日';
       else if (type === 'weekends') label = '土日・休日';
-      else if (type === 'weekly' && Array.isArray(todo.days) && todo.days.length > 0) {
+      else if ((type === 'weekly' || Array.isArray(todo.days)) && Array.isArray(todo.days) && todo.days.length > 0) {
         const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
         const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
         
         const sortedDays = [...todo.days].sort((a, b) => {
-          const ia = dayOrder.indexOf(a) !== -1 ? dayOrder.indexOf(a) : DAY_MAP[a];
-          const ib = dayOrder.indexOf(b) !== -1 ? dayOrder.indexOf(b) : DAY_MAP[b];
-          return ia - ib;
+          return dayOrder.indexOf(String(a).toLowerCase()) - dayOrder.indexOf(String(b).toLowerCase());
         });
 
-        label = sortedDays.map(d => dayNames[d] || DAY_NAMES_JA[DAY_MAP[d]] || d).join('・');
+        label = sortedDays.map(d => dayNames[String(d).toLowerCase()] || d).join('・');
       } else {
         label = '毎日';
       }
@@ -792,7 +771,6 @@ function openEditTodoModal(todo) {
 
     setModalScheduleType(cleanTodo.scheduleType);
 
-    // Exact repeatType match to prevent preset vs weekly confusion
     const rType = cleanTodo.repeatType;
     if (rType === 'daily' || rType === 'weekdays' || rType === 'weekends' || rType === 'weekly') {
       todoRepeatSelect.value = rType;
@@ -803,10 +781,15 @@ function openEditTodoModal(todo) {
     todoDateInput.value = cleanTodo.specificDate || getTodayDateString();
     todoTimeInput.value = cleanTodo.targetTime || '';
 
-    // Populate checkboxes according to cleanTodo.days
+    // Restore checkbox checked states by exact matching value ('mon','tue','wed','thu','fri','sat','sun')
     const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
+    const targetDays = Array.isArray(cleanTodo.days) 
+      ? cleanTodo.days.map(d => String(d).trim().toLowerCase()) 
+      : [];
+
     checkboxes.forEach(cb => {
-      cb.checked = Array.isArray(cleanTodo.days) && cleanTodo.days.some(d => d === cb.value || DAY_MAP[d] === DAY_MAP[cb.value]);
+      const val = cb.value.trim().toLowerCase();
+      cb.checked = targetDays.includes(val);
     });
 
     if (cleanTodo.scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
@@ -846,9 +829,8 @@ function handleSaveTodo() {
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     } else if (repeatType === 'weekly') {
       const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
-      checkboxes.forEach(cb => selectedDays.push(cb.value));
+      selectedDays = Array.from(checkboxes).map(cb => cb.value.trim().toLowerCase());
       
-      // Fallback if no checkbox checked
       if (selectedDays.length === 0) {
         alert("取り組む曜日を1つ以上選択してください");
         return;

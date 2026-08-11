@@ -1410,7 +1410,7 @@ html, body {
 }
 
 /* ==========================================================================
-   Modal Overlay & Theme Grid & ToDo Form
+   Modal Overlay & Form Alignment
    ========================================================================== */
 .modal-overlay {
   position: fixed;
@@ -1470,7 +1470,7 @@ html, body {
   margin-bottom: 14px;
 }
 
-/* ToDo Modal Form Inputs */
+/* ToDo Modal Form Inputs - Perfectly Unified Layout & Width */
 .todo-form-group {
   text-align: left;
 }
@@ -1483,20 +1483,33 @@ html, body {
   margin-bottom: 4px;
 }
 
-.text-input, .select-input {
-  width: 100%;
+/* Unified styling for all input types (text, date, time, select) */
+.text-input, 
+.select-input,
+input[type="text"].text-input,
+input[type="date"].text-input,
+input[type="time"].text-input,
+select.select-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  height: 42px !important;
   border: 1.5px solid #cbd5e1;
   border-radius: var(--radius-md);
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 0.88rem;
   font-family: inherit;
   color: var(--text-main);
   outline: none;
   background: #f8fafc;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: block;
 }
 
-.text-input:focus, .select-input:focus {
+.text-input:focus, 
+.select-input:focus,
+input[type="date"].text-input:focus,
+input[type="time"].text-input:focus {
   border-color: var(--primary);
   background: #ffffff;
   box-shadow: 0 0 0 3px var(--primary-glow);

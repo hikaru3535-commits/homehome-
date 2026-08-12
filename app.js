@@ -1,6 +1,6 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.4
+ * Self-Esteem Boosting Mobile Web App v4.5
  * Storage Key v4 Reset & Simple Checkbox Extraction / Modal Restoration
  */
 

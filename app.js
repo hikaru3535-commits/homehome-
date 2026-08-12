@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.3
- * Strict Single & Multi-Day Array Persistence and Matching
+ * Self-Esteem Boosting Mobile Web App v4.4
+ * Storage Key v4 Reset & Simple Checkbox Extraction / Modal Restoration
  */
 
 // ==========================================
@@ -236,7 +236,7 @@ function sanitizeTodo(todo) {
 }
 
 // ==========================================
-// 4. APP STATE MANAGEMENT & STORAGE MIGRATION
+// 4. APP STATE MANAGEMENT & CLEAN STORAGE (v4)
 // ==========================================
 let state = {
   todayCount: 0,
@@ -256,32 +256,17 @@ let state = {
   ]
 };
 
-const LEGACY_STORAGE_KEYS = ['hometama_app_state_v1', 'hometama_app_state_v2'];
-const CURRENT_STORAGE_KEY = 'hometama_app_state_v3';
+// STORAGE KEY UPDATED TO V4 (RESET STALE DATA CACHE)
+const CURRENT_STORAGE_KEY = 'hometama_app_state_v4';
 
 function loadState() {
   try {
-    let mergedData = {};
-
-    LEGACY_STORAGE_KEYS.forEach(key => {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          mergedData = { ...mergedData, ...parsed };
-        } catch (e) {}
-      }
-    });
-
-    const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY);
-    if (currentRaw) {
-      try {
-        const parsed = JSON.parse(currentRaw);
-        mergedData = { ...mergedData, ...parsed };
-      } catch (e) {}
+    const raw = localStorage.getItem(CURRENT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...state, ...parsed };
     }
 
-    state = { ...state, ...mergedData };
     state.todayCount = Math.max(0, state.todayCount || 0);
     state.totalCount = Math.max(0, state.totalCount || 0);
 
@@ -774,7 +759,7 @@ function openAddTodoModal() {
   
   setModalScheduleType('repeat');
 
-  // Reset checkboxes and ensure hidden class is applied to #todo-days-selector
+  // Reset all checkboxes to unchecked state
   document.querySelectorAll('#todo-days-selector input[type="checkbox"]').forEach(cb => {
     cb.checked = false;
   });
@@ -804,15 +789,15 @@ function openEditTodoModal(todo) {
     todoDateInput.value = cleanTodo.specificDate || getTodayDateString();
     todoTimeInput.value = cleanTodo.targetTime || '';
 
-    // Restore checkbox checked states by exact matching value ('mon','tue','wed','thu','fri','sat','sun')
+    // Restore checkbox checked states strictly matching cleanTodo.days
     const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
-    const targetDays = Array.isArray(cleanTodo.days) 
+    const currentDays = Array.isArray(cleanTodo.days) 
       ? cleanTodo.days.map(d => String(d).trim().toLowerCase()) 
       : [];
 
     checkboxes.forEach(cb => {
       const val = cb.value.trim().toLowerCase();
-      cb.checked = targetDays.includes(val);
+      cb.checked = currentDays.includes(val);
     });
 
     if (cleanTodo.scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
@@ -851,8 +836,9 @@ function handleSaveTodo() {
       }
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     } else if (repeatType === 'weekly') {
-      const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
-      selectedDays = Array.from(checkboxes).map(cb => String(cb.value).trim().toLowerCase());
+      // Simplified & robust extraction of checked checkboxes
+      const checkedBoxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
+      selectedDays = Array.from(checkedBoxes).map(cb => cb.value.trim().toLowerCase());
       
       if (selectedDays.length === 0) {
         alert("取り組む曜日を1つ以上選択してください");

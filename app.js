@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.6
- * Top Priority todo.days matching in isTodoActiveToday & Saved Todo Days logging
+ * Self-Esteem Boosting Mobile Web App v4.7
+ * Exact Weekly Priority Day Evaluation & Array Type Guarantee
  */
 
 // ==========================================
@@ -309,7 +309,7 @@ function saveState() {
 }
 
 // ==========================================
-// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION (STRICT TOP PRIORITY TODO.DAYS)
+// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION (STRICT TOP PRIORITY WEEKLY / TODO.DAYS)
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -319,42 +319,32 @@ function getTodayDateString() {
 function isTodoActiveToday(todo) {
   try {
     if (!todo) return false;
-
     const todayStr = getTodayDateString();
     const currentDay = getTodayWeekdayKey(); // 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
     const d = new Date();
-    const dayIndex = d.getDay(); // 0 = sun, 1 = mon, ..., 6 = sat
+    const dayIndex = d.getDay(); // 0=sun, 1=mon, ...
 
-    // 1. Specific Date Check
+    // 1. 特定日付指定
     if (todo.scheduleType === 'specific_date') {
-      const isActive = (todo.specificDate === todayStr);
-      console.log(`[ToDoCheck Date] Title: "${todo.title}", TargetDate: ${todo.specificDate}, Today: ${todayStr}, IsActive: ${isActive}`);
-      return isActive;
+      return todo.specificDate === todayStr;
     }
 
-    // 2. TOP PRIORITY CHECK: If todo.days array exists and has elements, check todo.days FIRST regardless of repeatType!
-    if (Array.isArray(todo.days) && todo.days.length > 0) {
-      const normalizedDays = todo.days.map(d => String(d).trim().toLowerCase());
-      const isActive = normalizedDays.includes(currentDay);
-      console.log(`[ToDoCheck Days] Title: "${todo.title}", Schedule: ${todo.scheduleType}, Days:`, todo.days, `TodayKey: "${currentDay}", IsActive: ${isActive}`);
-      return isActive;
-    }
-
-    // 3. Fallback checks for repeatType if todo.days is missing or empty
     const type = todo.repeatType || todo.repeat || 'daily';
-    let isActive = false;
-    if (type === 'daily') {
-      isActive = true;
-    } else if (type === 'weekdays') {
-      isActive = (dayIndex >= 1 && dayIndex <= 5);
-    } else if (type === 'weekends') {
-      isActive = (dayIndex === 0 || dayIndex === 6);
-    } else {
-      isActive = true;
+
+    // 2. 毎週（weekly）または days 配列がある場合は最優先で曜日チェック
+    if (type === 'weekly' || (Array.isArray(todo.days) && todo.days.length > 0)) {
+      const normalizedDays = todo.days.map(x => String(x).trim().toLowerCase());
+      const isActive = normalizedDays.includes(currentDay);
+      console.log(`[ToDoCheck Weekly] Title: "${todo.title}", Days:`, todo.days, `TodayKey: "${currentDay}", IsActive: ${isActive}`);
+      return isActive;
     }
 
-    console.log(`[ToDoCheck Fallback] Title: "${todo.title}", RepeatType: ${type}, TodayKey: "${currentDay}", IsActive: ${isActive}`);
-    return isActive;
+    // 3. その他のプリセット判定
+    if (type === 'daily') return true;
+    if (type === 'weekdays') return dayIndex >= 1 && dayIndex <= 5;
+    if (type === 'weekends') return dayIndex === 0 || dayIndex === 6;
+
+    return true;
   } catch (err) {
     console.error("isTodoActiveToday error:", err);
     return true;
@@ -857,7 +847,6 @@ function handleSaveTodo() {
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     }
 
-    // Explicit Log as requested: "Saved Todo Days:", selectedDays
     console.log("Saved Todo Days:", selectedDays);
 
     if (editId) {
@@ -1025,7 +1014,7 @@ function createFloatingPlus(e) {
 
     document.body.appendChild(floatEl);
 
-    setTimeout(() => floatEl.remove(), 900);
+    setTimeout(() => floatEl.remove(), 800);
   } catch (e) {}
 }
 

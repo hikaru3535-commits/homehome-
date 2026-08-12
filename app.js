@@ -1198,22 +1198,23 @@ function renderHomeTodoList() {
 
   container.innerHTML = '';
 
-  const activeTodos = state.todos.filter(isTodoActiveToday);
+  // Display ALL registered habit ToDos on home screen regardless of date/weekday settings
+  const allTodos = state.todos;
   const todayStr = getTodayDateString();
-  const completedCount = activeTodos.filter(t => t.completedDates && t.completedDates.includes(todayStr)).length;
+  const completedCount = allTodos.filter(t => t.completedDates && t.completedDates.includes(todayStr)).length;
 
-  badge.innerText = `${completedCount}/${activeTodos.length} 完了`;
+  badge.innerText = `${completedCount}/${allTodos.length} 完了`;
 
-  if (activeTodos.length === 0) {
+  if (allTodos.length === 0) {
     container.innerHTML = `
       <div class="empty-memo-state" style="padding: 12px 0;">
-        <p style="font-size: 0.78rem;">今日予定されている習慣ToDoはありません✨</p>
+        <p style="font-size: 0.78rem;">登録されている習慣ToDoはありません✨</p>
       </div>
     `;
     return;
   }
 
-  activeTodos.forEach(todo => {
+  allTodos.forEach(todo => {
     const isCompleted = todo.completedDates && todo.completedDates.includes(todayStr);
     const item = document.createElement('div');
     item.className = `todo-item ${isCompleted ? 'completed' : ''}`;

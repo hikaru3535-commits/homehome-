@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.2
- * Added requested console.log([ToDoCheck] ...) line for debugging
+ * Self-Esteem Boosting Mobile Web App v4.3
+ * Strict Single & Multi-Day Array Persistence and Matching
  */
 
 // ==========================================
@@ -195,7 +195,7 @@ function getTodayWeekdayKey() {
   return WEEKDAY_KEYS[dayIndex];
 }
 
-// Helper to sanitize any todo item while preserving received days array intact (especially 'sat','sun')
+// Helper to sanitize any todo item while guaranteeing days is a flat Array of lowercased trimmed strings
 function sanitizeTodo(todo) {
   if (!todo || typeof todo !== 'object') {
     return {
@@ -213,6 +213,8 @@ function sanitizeTodo(todo) {
   let preservedDays = [];
   if (Array.isArray(todo.days) && todo.days.length > 0) {
     preservedDays = todo.days.map(d => String(d).trim().toLowerCase());
+  } else if (todo.days && typeof todo.days === 'string') {
+    preservedDays = [String(todo.days).trim().toLowerCase()];
   } else if (todo.repeatType === 'weekdays') {
     preservedDays = ['mon','tue','wed','thu','fri'];
   } else if (todo.repeatType === 'weekends') {
@@ -353,8 +355,8 @@ function isTodoActiveToday(todo) {
       } else if (type === 'weekends') {
         isActive = (dayIndex === 0 || dayIndex === 6);
       } else if (Array.isArray(todo.days) && todo.days.length > 0) {
-        const daysArr = todo.days.map(x => String(x).trim().toLowerCase());
-        isActive = daysArr.includes(currentDay);
+        const normalizedDays = todo.days.map(d => String(d).trim().toLowerCase());
+        isActive = normalizedDays.includes(currentDay);
       } else {
         isActive = true;
       }
@@ -850,7 +852,7 @@ function handleSaveTodo() {
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     } else if (repeatType === 'weekly') {
       const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
-      selectedDays = Array.from(checkboxes).map(cb => cb.value.trim().toLowerCase());
+      selectedDays = Array.from(checkboxes).map(cb => String(cb.value).trim().toLowerCase());
       
       if (selectedDays.length === 0) {
         alert("取り組む曜日を1つ以上選択してください");

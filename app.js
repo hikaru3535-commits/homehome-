@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.1
- * Pinpoint Safe Fix for isTodoActiveToday Display Filtering
+ * Self-Esteem Boosting Mobile Web App v4.2
+ * Added requested console.log([ToDoCheck] ...) line for debugging
  */
 
 // ==========================================
@@ -323,7 +323,7 @@ function saveState() {
 }
 
 // ==========================================
-// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION (PINPOINT SAFE FILTERING)
+// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -334,42 +334,35 @@ function isTodoActiveToday(todo) {
   try {
     if (!todo) return false;
 
-    // 1. Specific Date Scheduling Check
-    if (todo.scheduleType === 'specific_date') {
-      const isActive = (todo.specificDate === getTodayDateString());
-      return isActive;
-    }
-
-    // 2. Daily Repeat Check
-    const type = todo.repeatType || todo.repeat || 'daily';
-    if (type === 'daily') {
-      return true;
-    }
-
-    // 3. Current Day Evaluation
+    const todayStr = getTodayDateString();
     const currentDay = getTodayWeekdayKey(); // 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
     const d = new Date();
     const dayIndex = d.getDay(); // 0 = sun, 1 = mon, ..., 6 = sat
 
-    // 4. Weekdays Preset Check
-    if (type === 'weekdays') {
-      return dayIndex >= 1 && dayIndex <= 5;
+    let isActive = false;
+
+    if (todo.scheduleType === 'specific_date') {
+      isActive = (todo.specificDate === todayStr);
+    } else {
+      const type = todo.repeatType || todo.repeat || 'daily';
+
+      if (type === 'daily') {
+        isActive = true;
+      } else if (type === 'weekdays') {
+        isActive = (dayIndex >= 1 && dayIndex <= 5);
+      } else if (type === 'weekends') {
+        isActive = (dayIndex === 0 || dayIndex === 6);
+      } else if (Array.isArray(todo.days) && todo.days.length > 0) {
+        const daysArr = todo.days.map(x => String(x).trim().toLowerCase());
+        isActive = daysArr.includes(currentDay);
+      } else {
+        isActive = true;
+      }
     }
 
-    // 5. Weekends Preset Check
-    if (type === 'weekends') {
-      return dayIndex === 0 || dayIndex === 6;
-    }
+    console.log(`[ToDoCheck] Title: "${todo.title}", Schedule: ${todo.scheduleType}, Days:`, todo.days, `TodayKey: "${currentDay}", IsActive: ${isActive}`);
 
-    // 6. Weekly Multi-Weekday Check (Strictly uses todo.days.includes(currentDay))
-    if (Array.isArray(todo.days) && todo.days.length > 0) {
-      const daysArr = todo.days.map(x => String(x).trim().toLowerCase());
-      const isActive = daysArr.includes(currentDay);
-      console.log(`[HabitCheck] "${todo.title}" | Today: ${currentDay} | Registered Days: ${JSON.stringify(todo.days)} | Match: ${isActive}`);
-      return isActive;
-    }
-
-    return true;
+    return isActive;
   } catch (err) {
     console.error("isTodoActiveToday error:", err);
     return true;

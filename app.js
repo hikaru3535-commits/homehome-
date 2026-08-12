@@ -1,7 +1,7 @@
 /**
  * ほめタマ (SelfBoost Counter & Habit ToDo)
- * Self-Esteem Boosting Mobile Web App v4.7
- * Exact Weekly Priority Day Evaluation & Array Type Guarantee
+ * Self-Esteem Boosting Mobile Web App v4.6
+ * Fully Validated Complete Script Replacement
  */
 
 // ==========================================
@@ -149,7 +149,6 @@ const PREDEFINED_MILESTONES = [
 function getLevelInfo(totalCount) {
   let currentLevel = PREDEFINED_MILESTONES[0];
   let nextLevel = PREDEFINED_MILESTONES[1];
-
   for (let i = 0; i < PREDEFINED_MILESTONES.length; i++) {
     if (totalCount >= PREDEFINED_MILESTONES[i].count) {
       currentLevel = PREDEFINED_MILESTONES[i];
@@ -158,19 +157,16 @@ function getLevelInfo(totalCount) {
       break;
     }
   }
-
   if (totalCount >= 500) {
     const extraLevelNum = Math.floor((totalCount - 500) / 100) + 1;
     const currentReq = 500 + (extraLevelNum - 1) * 100;
     const nextReq = 500 + extraLevelNum * 100;
-
     currentLevel = {
       count: currentReq,
       badge: `💎 Lv.${7 + extraLevelNum} 宇宙クラス`,
       title: `レベル ${7 + extraLevelNum} 達成！`,
       quote: `「累計${totalCount.toLocaleString()}回達成！あなたの自己肯定感は無限大です！」`
     };
-
     nextLevel = {
       count: nextReq,
       badge: `💎 Lv.${8 + extraLevelNum} 宇宙クラス`,
@@ -178,24 +174,20 @@ function getLevelInfo(totalCount) {
       quote: `「累計${nextReq.toLocaleString()}回目を目指して突き進みましょう！」`
     };
   }
-
   return { currentLevel, nextLevel };
 }
 
 // ==========================================
 // 3. STRICT getDay() WEEKDAY MAPPING
 // ==========================================
-// 0 = 'sun', 1 = 'mon', 2 = 'tue', 3 = 'wed', 4 = 'thu', 5 = 'fri', 6 = 'sat'
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-const WEEKDAY_NAMES_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
 function getTodayWeekdayKey() {
   const d = new Date();
-  const dayIndex = d.getDay(); // 0 = sun, 1 = mon, 2 = tue, 3 = wed, 4 = thu, 5 = fri, 6 = sat
+  const dayIndex = d.getDay(); // 0 = sun, 1 = mon, ..., 6 = sat
   return WEEKDAY_KEYS[dayIndex];
 }
 
-// Helper to sanitize any todo item while guaranteeing days is a flat Array of lowercased trimmed strings
 function sanitizeTodo(todo) {
   if (!todo || typeof todo !== 'object') {
     return {
@@ -209,7 +201,6 @@ function sanitizeTodo(todo) {
       completedDates: []
     };
   }
-
   let preservedDays = [];
   if (Array.isArray(todo.days) && todo.days.length > 0) {
     preservedDays = todo.days.map(d => String(d).trim().toLowerCase());
@@ -222,7 +213,6 @@ function sanitizeTodo(todo) {
   } else {
     preservedDays = ['mon','tue','wed','thu','fri','sat','sun'];
   }
-
   return {
     id: todo.id || Date.now(),
     title: todo.title || '無題のタスク',
@@ -265,10 +255,8 @@ function loadState() {
       const parsed = JSON.parse(raw);
       state = { ...state, ...parsed };
     }
-
     state.todayCount = Math.max(0, state.todayCount || 0);
     state.totalCount = Math.max(0, state.totalCount || 0);
-
     if (state.todos && Array.isArray(state.todos)) {
       state.todos = state.todos.map(sanitizeTodo);
     } else {
@@ -278,7 +266,6 @@ function loadState() {
         { id: 3, title: '✨ できたことを1つメモする', scheduleType: 'repeat', repeatType: 'daily', days: ['mon','tue','wed','thu','fri','sat','sun'], specificDate: '', targetTime: '21:00', completedDates: [] }
       ];
     }
-
     const todayStr = new Date().toDateString();
     if (state.lastActiveDate !== todayStr) {
       const lastDate = new Date(state.lastActiveDate);
@@ -296,7 +283,6 @@ function loadState() {
   } catch (err) {
     console.error("loadState error:", err);
   }
-
   saveState();
 }
 
@@ -309,7 +295,7 @@ function saveState() {
 }
 
 // ==========================================
-// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION (STRICT TOP PRIORITY WEEKLY / TODO.DAYS)
+// 5. HABIT TODO REPEAT & DATE/TIME EVALUATION
 // ==========================================
 function getTodayDateString() {
   const d = new Date();
@@ -320,26 +306,20 @@ function isTodoActiveToday(todo) {
   try {
     if (!todo) return false;
     const todayStr = getTodayDateString();
-    const currentDay = getTodayWeekdayKey(); // 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'
+    const currentDay = getTodayWeekdayKey();
     const d = new Date();
-    const dayIndex = d.getDay(); // 0=sun, 1=mon, ...
+    const dayIndex = d.getDay();
 
-    // 1. 特定日付指定
     if (todo.scheduleType === 'specific_date') {
       return todo.specificDate === todayStr;
     }
 
     const type = todo.repeatType || todo.repeat || 'daily';
-
-    // 2. 毎週（weekly）または days 配列がある場合は最優先で曜日チェック
     if (type === 'weekly' || (Array.isArray(todo.days) && todo.days.length > 0)) {
       const normalizedDays = todo.days.map(x => String(x).trim().toLowerCase());
-      const isActive = normalizedDays.includes(currentDay);
-      console.log(`[ToDoCheck Weekly] Title: "${todo.title}", Days:`, todo.days, `TodayKey: "${currentDay}", IsActive: ${isActive}`);
-      return isActive;
+      return normalizedDays.includes(currentDay);
     }
 
-    // 3. その他のプリセット判定
     if (type === 'daily') return true;
     if (type === 'weekdays') return dayIndex >= 1 && dayIndex <= 5;
     if (type === 'weekends') return dayIndex === 0 || dayIndex === 6;
@@ -355,7 +335,6 @@ function getScheduleLabel(todo) {
   try {
     let label = '';
     const scheduleType = todo.scheduleType || 'repeat';
-
     if (scheduleType === 'specific_date' && todo.specificDate) {
       const parts = todo.specificDate.split('-');
       if (parts.length === 3) {
@@ -375,17 +354,14 @@ function getScheduleLabel(todo) {
         const sortedDays = [...todo.days].sort((a, b) => {
           return dayOrder.indexOf(String(a).toLowerCase()) - dayOrder.indexOf(String(b).toLowerCase());
         });
-
         label = sortedDays.map(d => dayNames[String(d).toLowerCase()] || d).join('・');
       } else {
         label = '毎日';
       }
     }
-
     if (todo.targetTime) {
       label += ` ⏰ ${todo.targetTime}`;
     }
-
     return label;
   } catch (err) {
     return '毎日';
@@ -397,17 +373,13 @@ function toggleTodoCompletion(todoId) {
     const todayStr = getTodayDateString();
     const todo = state.todos.find(t => t.id === todoId);
     if (!todo) return;
-
     const isCompleted = todo.completedDates.includes(todayStr);
-
     if (!isCompleted) {
       todo.completedDates.push(todayStr);
       state.todayCount += 1;
       state.totalCount += 1;
-
       playCelebrationSound();
       triggerConfetti();
-
       createFloatingText(`+1 ${todo.title} 完了! 🎉`);
       updateComplimentMessage();
       checkMilestoneUnlocked();
@@ -415,11 +387,9 @@ function toggleTodoCompletion(todoId) {
       todo.completedDates = todo.completedDates.filter(d => d !== todayStr);
       state.todayCount = Math.max(0, state.todayCount - 1);
       state.totalCount = Math.max(0, state.totalCount - 1);
-
       if (state.soundEnabled) playTapSound();
       createFloatingText(`-1 取消`);
     }
-
     saveState();
     renderCounterStats();
     renderLevelProgress();
@@ -435,18 +405,14 @@ function createFloatingText(text) {
     const floatEl = document.createElement('span');
     floatEl.className = 'floating-plus';
     floatEl.innerText = text;
-
     const tapBtn = document.getElementById('tap-button');
     const rect = tapBtn.getBoundingClientRect();
     const x = rect.left + rect.width / 2 - 50;
     const y = rect.top + rect.height / 2 - 20;
-
     floatEl.style.left = `${x}px`;
     floatEl.style.top = `${y}px`;
     floatEl.style.fontSize = '1.1rem';
-
     document.body.appendChild(floatEl);
-
     setTimeout(() => floatEl.remove(), 900);
   } catch (e) {}
 }
@@ -464,7 +430,6 @@ function deleteHabitTodo(id) {
 // 6. WEB AUDIO SYNTHESIZER
 // ==========================================
 let audioCtx = null;
-
 function initAudio() {
   if (!audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -481,22 +446,17 @@ function playTapSound() {
   if (!state.soundEnabled) return;
   initAudio();
   if (!audioCtx) return;
-
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-
     const baseFreq = 440 + (state.todayCount % 12) * 20;
     osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioCtx.currentTime + 0.08);
-
     gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-
     osc.start();
     osc.stop(audioCtx.currentTime + 0.12);
   } catch (e) {}
@@ -506,7 +466,6 @@ function playCelebrationSound() {
   if (!state.soundEnabled) return;
   initAudio();
   if (!audioCtx) return;
-
   const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
     setTimeout(() => {
@@ -515,13 +474,10 @@ function playCelebrationSound() {
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
         gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
       } catch (e) {}
@@ -547,7 +503,6 @@ function triggerConfetti() {
   particles = [];
   const colors = ['#ff5e7e', '#fbbf24', '#34d399', '#c084fc', '#60a5fa', '#f472b6'];
   const particleCount = 70;
-
   for (let i = 0; i < particleCount; i++) {
     particles.push({
       x: canvas.width / 2,
@@ -562,18 +517,15 @@ function triggerConfetti() {
       shape: Math.random() > 0.4 ? 'rect' : 'circle'
     });
   }
-
   animateConfetti();
 }
 
 let confettiAnimationId = null;
 function animateConfetti() {
   if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
-
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let activeParticles = 0;
-
     particles.forEach(p => {
       if (p.opacity > 0) {
         activeParticles++;
@@ -582,13 +534,11 @@ function animateConfetti() {
         p.vy += 0.4;
         p.rotation += p.rSpeed;
         p.opacity -= 0.015;
-
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate((p.rotation * Math.PI) / 180);
         ctx.globalAlpha = Math.max(0, p.opacity);
         ctx.fillStyle = p.color;
-
         if (p.shape === 'rect') {
           ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.5);
         } else {
@@ -599,7 +549,6 @@ function animateConfetti() {
         ctx.restore();
       }
     });
-
     if (activeParticles > 0) {
       confettiAnimationId = requestAnimationFrame(loop);
     } else {
@@ -693,7 +642,6 @@ let activeScheduleType = 'repeat';
 function applyTheme(themeName) {
   state.theme = themeName;
   document.body.setAttribute('data-theme', themeName);
-
   document.querySelectorAll('.theme-option-btn').forEach(btn => {
     if (btn.getAttribute('data-theme') === themeName) {
       btn.classList.add('active');
@@ -701,7 +649,6 @@ function applyTheme(themeName) {
       btn.classList.remove('active');
     }
   });
-
   saveState();
 }
 
@@ -733,7 +680,6 @@ function setModalScheduleType(type) {
       btn.classList.remove('active');
     }
   });
-
   if (type === 'specific_date') {
     todoRepeatGroup.classList.add('hidden');
     todoDateGroup.classList.remove('hidden');
@@ -753,13 +699,10 @@ function openAddTodoModal() {
   todoTimeInput.value = '';
   
   setModalScheduleType('repeat');
-
-  // Reset all checkboxes to unchecked state
   document.querySelectorAll('#todo-days-selector input[type="checkbox"]').forEach(cb => {
     cb.checked = false;
   });
   todoDaysSelector.classList.add('hidden');
-
   todoModal.classList.remove('hidden');
   todoTitleInput.focus();
 }
@@ -771,36 +714,29 @@ function openEditTodoModal(todo) {
     todoModalTitle.innerText = '習慣ToDoを編集';
     todoModalSubtext.innerText = 'タスクの内容や指定日時・時間を変更できます';
     todoTitleInput.value = cleanTodo.title;
-
     setModalScheduleType(cleanTodo.scheduleType);
-
     const rType = cleanTodo.repeatType;
     if (rType === 'daily' || rType === 'weekdays' || rType === 'weekends' || rType === 'weekly') {
       todoRepeatSelect.value = rType;
     } else {
       todoRepeatSelect.value = 'weekly';
     }
-
     todoDateInput.value = cleanTodo.specificDate || getTodayDateString();
     todoTimeInput.value = cleanTodo.targetTime || '';
 
-    // Restore checkbox checked states strictly matching cleanTodo.days
     const checkboxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]');
     const currentDays = Array.isArray(cleanTodo.days) 
       ? cleanTodo.days.map(d => String(d).trim().toLowerCase()) 
       : [];
-
     checkboxes.forEach(cb => {
       const val = cb.value.trim().toLowerCase();
       cb.checked = currentDays.includes(val);
     });
-
     if (cleanTodo.scheduleType === 'repeat' && todoRepeatSelect.value === 'weekly') {
       todoDaysSelector.classList.remove('hidden');
     } else {
       todoDaysSelector.classList.add('hidden');
     }
-
     todoModal.classList.remove('hidden');
     todoTitleInput.focus();
   } catch (err) {
@@ -815,13 +751,11 @@ function handleSaveTodo() {
       todoTitleInput.focus();
       return;
     }
-
     const editId = todoEditIdInput.value ? Number(todoEditIdInput.value) : null;
     const scheduleType = activeScheduleType;
     const repeatType = todoRepeatSelect.value;
     const specificDate = todoDateInput.value;
     const targetTime = todoTimeInput.value;
-
     let selectedDays = [];
 
     if (scheduleType === 'specific_date') {
@@ -831,9 +765,8 @@ function handleSaveTodo() {
       }
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     } else if (repeatType === 'weekly') {
-      // Simplified & robust extraction of checked checkboxes as 1+ element Array
       const checkedBoxes = document.querySelectorAll('#todo-days-selector input[type="checkbox"]:checked');
-      selectedDays = Array.from(checkedBoxes).map(cb => String(cb.value).trim().toLowerCase());
+      selectedDays = Array.from(checkedBoxes).map(cb => cb.value.trim().toLowerCase());
       
       if (selectedDays.length === 0) {
         alert("取り組む曜日を1つ以上選択してください");
@@ -846,8 +779,6 @@ function handleSaveTodo() {
     } else {
       selectedDays = ['mon','tue','wed','thu','fri','sat','sun'];
     }
-
-    console.log("Saved Todo Days:", selectedDays);
 
     if (editId) {
       const idx = state.todos.findIndex(t => t.id === editId);
@@ -875,7 +806,6 @@ function handleSaveTodo() {
       });
       state.todos.push(newTodo);
     }
-
     saveState();
     renderHomeTodoList();
     renderTodoManagerList();
@@ -888,12 +818,10 @@ function handleSaveTodo() {
 
 function initUI() {
   tapButton.addEventListener('click', handleTap);
-
   modeTodayBtn.addEventListener('click', () => setDisplayMode('today'));
   modeTotalBtn.addEventListener('click', () => setDisplayMode('total'));
   statBoxToday.addEventListener('click', () => setDisplayMode('today'));
   statBoxTotal.addEventListener('click', () => setDisplayMode('total'));
-
   themeModalBtn.addEventListener('click', () => themeModal.classList.remove('hidden'));
   themeCloseBtn.addEventListener('click', () => themeModal.classList.add('hidden'));
   
@@ -903,18 +831,15 @@ function initUI() {
       applyTheme(theme);
     });
   });
-
   addTodoModalBtn.addEventListener('click', openAddTodoModal);
   managerAddTodoBtn.addEventListener('click', openAddTodoModal);
   cancelTodoBtn.addEventListener('click', () => todoModal.classList.add('hidden'));
-
   schedTypeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const type = btn.getAttribute('data-type');
       setModalScheduleType(type);
     });
   });
-
   todoRepeatSelect.addEventListener('change', () => {
     if (todoRepeatSelect.value === 'weekly') {
       todoDaysSelector.classList.remove('hidden');
@@ -922,23 +847,19 @@ function initUI() {
       todoDaysSelector.classList.add('hidden');
     }
   });
-
   saveTodoBtn.addEventListener('click', handleSaveTodo);
-
   updateSoundUI();
   soundToggleBtn.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
     updateSoundUI();
     saveState();
   });
-
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetTab = item.getAttribute('data-tab');
       switchTab(targetTab);
     });
   });
-
   categoryPills.forEach(pill => {
     pill.addEventListener('click', () => {
       categoryPills.forEach(p => p.classList.remove('active'));
@@ -946,7 +867,6 @@ function initUI() {
       activeMemoCategory = pill.getAttribute('data-cat');
     });
   });
-
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.getAttribute('data-prompt');
@@ -955,10 +875,8 @@ function initUI() {
       updateCharCount();
     });
   });
-
   memoInput.addEventListener('input', updateCharCount);
   addMemoBtn.addEventListener('click', handleAddMemo);
-
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
@@ -967,13 +885,10 @@ function initUI() {
       renderMemoList();
     });
   });
-
   modalCloseBtn.addEventListener('click', () => milestoneModal.classList.add('hidden'));
-
   document.getElementById('stats-modal-btn').addEventListener('click', () => {
     switchTab('tab-records');
   });
-
   setDisplayMode(state.displayMode || 'today');
 }
 
@@ -983,17 +898,14 @@ function initUI() {
 function handleTap(e) {
   state.todayCount += 1;
   state.totalCount += 1;
-
   playTapSound();
   if (navigator.vibrate) {
     navigator.vibrate(15);
   }
-
   createFloatingPlus(e);
   createButtonRipple(e);
   updateComplimentMessage();
   checkMilestoneUnlocked();
-
   saveState();
   renderCounterStats();
   renderLevelProgress();
@@ -1008,12 +920,9 @@ function createFloatingPlus(e) {
     const rect = tapButton.getBoundingClientRect();
     const x = (e.clientX || rect.left + rect.width / 2) - 30;
     const y = (e.clientY || rect.top + rect.height / 2) - 20;
-
     floatEl.style.left = `${x}px`;
     floatEl.style.top = `${y}px`;
-
     document.body.appendChild(floatEl);
-
     setTimeout(() => floatEl.remove(), 800);
   } catch (e) {}
 }
@@ -1022,30 +931,23 @@ function createButtonRipple(e) {
   try {
     const ripple = document.createElement('span');
     ripple.className = 'click-ripple';
-
     const rect = tapButton.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
     ripple.style.width = ripple.style.height = `${size}px`;
-
     const x = (e.clientX ? e.clientX - rect.left : rect.width / 2) - size / 2;
     const y = (e.clientY ? e.clientY - rect.top : rect.height / 2) - size / 2;
-
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
-
     tapButton.appendChild(ripple);
-
     setTimeout(() => ripple.remove(), 500);
   } catch (e) {}
 }
 
 function updateComplimentMessage() {
   const { text, tag } = QuoteManager.getRandomQuote();
-
   complimentCard.classList.remove('bounce-pop');
   void complimentCard.offsetWidth;
   complimentCard.classList.add('bounce-pop');
-
   complimentText.innerText = text;
   currentPackTag.innerText = tag;
 }
@@ -1059,7 +961,6 @@ function checkMilestoneUnlocked() {
       triggerConfetti();
     }
   });
-
   if (state.totalCount > 500 && state.totalCount % 100 === 0) {
     if (!state.unlockedMilestones.includes(state.totalCount)) {
       state.unlockedMilestones.push(state.totalCount);
@@ -1102,24 +1003,19 @@ function handleAddMemo() {
     alert("メモは200文字以内で入力してください");
     return;
   }
-
   const now = new Date();
   const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
   const newMemo = {
     id: Date.now(),
     text: text,
     category: activeMemoCategory,
     date: dateStr
   };
-
   state.memos.unshift(newMemo);
   saveState();
-
   memoInput.value = '';
   updateCharCount();
   renderMemoList();
-
   if (state.soundEnabled) playTapSound();
 }
 
@@ -1131,11 +1027,9 @@ function deleteMemo(id) {
 
 function renderMemoList() {
   memoList.innerHTML = '';
-
   const filtered = activeMemoFilter === 'all'
     ? state.memos
     : state.memos.filter(m => m.category === activeMemoFilter);
-
   if (filtered.length === 0) {
     memoList.innerHTML = `
       <div class="empty-memo-state">
@@ -1146,16 +1040,13 @@ function renderMemoList() {
     `;
     return;
   }
-
   filtered.forEach(memo => {
     const card = document.createElement('div');
     card.className = 'memo-card';
-
     let catEmoji = '💪';
     if (memo.category === '自分ほめ') catEmoji = '✨';
     if (memo.category === '感謝') catEmoji = '🌸';
     if (memo.category === 'いいこと') catEmoji = '🍀';
-
     card.innerHTML = `
       <div class="memo-card-top">
         <span class="memo-cat-badge">${catEmoji} ${memo.category}</span>
@@ -1166,11 +1057,9 @@ function renderMemoList() {
         <button class="memo-action-btn delete-btn" data-id="${memo.id}">削除</button>
       </div>
     `;
-
     card.querySelector('.delete-btn').addEventListener('click', () => {
       deleteMemo(memo.id);
     });
-
     memoList.appendChild(card);
   });
 }
@@ -1189,15 +1078,11 @@ function renderHomeTodoList() {
   const container = document.getElementById('home-todo-list');
   const badge = document.getElementById('home-todo-badge');
   if (!container || !badge) return;
-
   container.innerHTML = '';
-
   const activeTodos = state.todos.filter(isTodoActiveToday);
   const todayStr = getTodayDateString();
   const completedCount = activeTodos.filter(t => t.completedDates && t.completedDates.includes(todayStr)).length;
-
   badge.innerText = `${completedCount}/${activeTodos.length} 完了`;
-
   if (activeTodos.length === 0) {
     container.innerHTML = `
       <div class="empty-memo-state" style="padding: 12px 0;">
@@ -1206,12 +1091,10 @@ function renderHomeTodoList() {
     `;
     return;
   }
-
   activeTodos.forEach(todo => {
     const isCompleted = todo.completedDates && todo.completedDates.includes(todayStr);
     const item = document.createElement('div');
     item.className = `todo-item ${isCompleted ? 'completed' : ''}`;
-
     item.innerHTML = `
       <div class="todo-left-content">
         <div class="todo-custom-checkbox" title="完了チェックの切替">${isCompleted ? '✓' : ''}</div>
@@ -1225,22 +1108,18 @@ function renderHomeTodoList() {
         <button class="todo-delete-btn home-todo-del-btn" data-id="${todo.id}" title="削除">🗑️ 削除</button>
       </div>
     `;
-
     item.querySelector('.todo-custom-checkbox').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleTodoCompletion(todo.id);
     });
-
     item.querySelector('.todo-title-clickable').addEventListener('click', (e) => {
       e.stopPropagation();
       openEditTodoModal(todo);
     });
-
     item.querySelector('.home-todo-del-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       deleteHabitTodo(todo.id);
     });
-
     container.appendChild(item);
   });
 }
@@ -1249,7 +1128,6 @@ function renderTodoManagerList() {
   const container = document.getElementById('todo-manager-list');
   if (!container) return;
   container.innerHTML = '';
-
   if (state.todos.length === 0) {
     container.innerHTML = `
       <div class="empty-memo-state" style="padding: 12px 0;">
@@ -1258,11 +1136,9 @@ function renderTodoManagerList() {
     `;
     return;
   }
-
   state.todos.forEach(todo => {
     const item = document.createElement('div');
     item.className = 'todo-item';
-
     item.innerHTML = `
       <div class="todo-title-clickable" style="display:flex; align-items:center; gap:8px;" title="タップして日時・時間を編集">
         <span class="todo-item-title">${escapeHTML(todo.title)}</span>
@@ -1273,17 +1149,14 @@ function renderTodoManagerList() {
         <button class="todo-delete-btn manager-todo-del-btn" data-id="${todo.id}">🗑️ 削除</button>
       </div>
     `;
-
     item.querySelector('.todo-title-clickable').addEventListener('click', (e) => {
       e.stopPropagation();
       openEditTodoModal(todo);
     });
-
     item.querySelector('.manager-todo-del-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       deleteHabitTodo(todo.id);
     });
-
     container.appendChild(item);
   });
 }
@@ -1296,7 +1169,6 @@ function switchTab(tabId) {
       item.classList.remove('active');
     }
   });
-
   tabPanes.forEach(pane => {
     if (pane.id === tabId) {
       pane.classList.add('active');
@@ -1304,7 +1176,6 @@ function switchTab(tabId) {
       pane.classList.remove('active');
     }
   });
-
   if (tabId === 'tab-counter') renderHomeTodoList();
   if (tabId === 'tab-memo') renderMemoList();
   if (tabId === 'tab-records') renderRecords();
@@ -1323,7 +1194,6 @@ function updateSoundUI() {
 function renderCounterStats() {
   const activeCount = state.displayMode === 'today' ? state.todayCount : state.totalCount;
   counterDisplay.innerText = activeCount.toLocaleString('ja-JP');
-
   todayCountDisplay.innerText = `${state.todayCount.toLocaleString('ja-JP')}回`;
   totalCountDisplay.innerText = `${state.totalCount.toLocaleString('ja-JP')}回`;
   streakCountDisplay.innerText = `${state.streakCount}日目🔥`;
@@ -1331,18 +1201,14 @@ function renderCounterStats() {
 
 function renderLevelProgress() {
   const { currentLevel, nextLevel } = getLevelInfo(state.totalCount);
-
   userLevelBadge.innerText = currentLevel.badge;
-
   if (nextLevel) {
     const prevCount = currentLevel.count;
     const targetCount = nextLevel.count;
     const currentProgress = state.totalCount - prevCount;
     const range = targetCount - prevCount;
     const remaining = targetCount - state.totalCount;
-
     const percent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
-
     levelNextText.innerText = `次の目標（${nextLevel.badge}）まで あと${remaining.toLocaleString()}回`;
     levelProgressFill.style.width = `${percent}%`;
   } else {
@@ -1355,7 +1221,6 @@ function renderRecords() {
   const packContainer = document.getElementById('quote-pack-selector');
   if (!packContainer) return;
   packContainer.innerHTML = '';
-
   Object.values(QUOTE_PACKS).forEach(pack => {
     const btn = document.createElement('button');
     const isActive = (state.activeQuotePack || 'standard') === pack.id;
@@ -1370,18 +1235,14 @@ function renderRecords() {
       </div>
       <span class="pack-badge">${isActive ? '選択中' : '切り替える'}</span>
     `;
-
     btn.addEventListener('click', () => {
       QuoteManager.setActivePack(pack.id);
       renderRecords();
       updateComplimentMessage();
     });
-
     packContainer.appendChild(btn);
   });
-
   renderTodoManagerList();
-
   const badgesGrid = document.getElementById('badges-grid');
   if (badgesGrid) {
     badgesGrid.innerHTML = '';
@@ -1389,24 +1250,19 @@ function renderRecords() {
       const isUnlocked = state.unlockedMilestones.includes(ms.count);
       const item = document.createElement('div');
       item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'}`;
-
       const [emoji, name] = ms.badge.split(' ');
-
       item.innerHTML = `
         <div class="badge-icon">${isUnlocked ? emoji : '🔒'}</div>
         <div class="badge-name">${name || ms.badge}</div>
         <div class="badge-condition">${ms.count}回タップ</div>
       `;
-
       badgesGrid.appendChild(item);
     });
   }
-
   const quotesList = document.getElementById('unlocked-quotes-list');
   if (quotesList) {
     quotesList.innerHTML = '';
     const unlockedMs = PREDEFINED_MILESTONES.filter(ms => state.unlockedMilestones.includes(ms.count));
-
     if (unlockedMs.length === 0) {
       quotesList.innerHTML = `
         <div class="empty-memo-state">
@@ -1415,7 +1271,6 @@ function renderRecords() {
       `;
       return;
     }
-
     unlockedMs.forEach(ms => {
       const card = document.createElement('div');
       card.className = 'quote-collect-card';
